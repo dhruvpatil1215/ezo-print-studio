@@ -1,0 +1,3191 @@
+const fs = require('fs');
+const path = require('path');
+
+// Let's create generate_app.js that compiles the entire workstation into index.html
+const htmlContent = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Ezo Print Studio — Mini Printing Workstation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- QRCode.js for high-contrast QR generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg-app: #0a0e17;
+  --bg-sidebar: #101626;
+  --bg-card: #151d30;
+  --bg-input: #0b1120;
+  --border: #222e49;
+  --border-focus: #3d5480;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-glow: rgba(16, 185, 129, 0.2);
+  --accent: #38bdf8;
+  --accent-glow: rgba(56, 189, 248, 0.2);
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 12px;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --font-deva: 'Noto Sans Devanagari', var(--font-sans);
+}
+
+[data-theme="light"] {
+  --bg-app: #f1f5f9;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --border: #cbd5e1;
+  --border-focus: #94a3b8;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  --primary: #059669;
+  --primary-hover: #047857;
+  --primary-glow: rgba(5, 150, 105, 0.15);
+  --accent: #0284c7;
+  --accent-glow: rgba(2, 132, 199, 0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* TOP NAVBAR */
+header.top-bar {
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 20px;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+.brand-text h1 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+.brand-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* HEADER CONTROLS */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.badge-status:hover {
+  border-color: var(--primary);
+  color: var(--text-main);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.status-dot.connected {
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+.btn-icon:hover {
+  background: var(--border);
+}
+
+/* MAIN LAYOUT */
+.app-container {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 61px);
+}
+
+/* SIDEBAR */
+aside.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  z-index: 90;
+}
+.sidebar-search {
+  padding: 12px 14px 6px;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 12px;
+  width: 100%;
+}
+.sidebar-nav {
+  padding: 8px 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+.nav-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  padding: 10px 10px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+  user-select: none;
+}
+.nav-item:hover {
+  background: var(--bg-input);
+  color: var(--text-main);
+}
+.nav-item.active {
+  background: var(--primary-glow);
+  color: var(--primary);
+  font-weight: 700;
+}
+.nav-item .icon {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+}
+.nav-item .fav-star {
+  margin-left: auto;
+  opacity: 0.2;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+.nav-item .fav-star.fav-active, .nav-item:hover .fav-star {
+  opacity: 1;
+  color: #f59e0b;
+}
+
+/* CONTENT AREA */
+main.workspace {
+  flex: 1;
+  display: flex;
+  overflow-x: hidden;
+  min-width: 0;
+  background: var(--bg-app);
+}
+
+/* DASHBOARD VIEW */
+.view-dashboard {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.hero-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(56, 189, 248, 0.08));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.hero-banner h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.hero-banner p {
+  color: var(--text-muted);
+  font-size: 13px;
+  max-width: 600px;
+}
+.quick-stats {
+  display: flex;
+  gap: 12px;
+}
+.stat-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.stat-pill strong {
+  display: block;
+  font-size: 16px;
+  color: var(--primary);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin: 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.feature-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.feature-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.feature-card .card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.feature-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.feature-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  flex: 1;
+}
+.feature-card .card-tag {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+/* WORKSPACE MODULE VIEW: DUAL PANE */
+.view-module {
+  display: none;
+  flex: 1;
+  width: 100%;
+}
+.view-module.active {
+  display: flex;
+}
+.module-editor {
+  flex: 1;
+  max-width: 640px;
+  min-width: 320px;
+  padding: 20px 24px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+.module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.module-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.module-header-title h2 {
+  font-size: 18px;
+  font-weight: 800;
+}
+.module-header-title span.mod-icon {
+  font-size: 24px;
+}
+
+/* PREVIEW PANE */
+.module-preview-pane {
+  flex: 1;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 380px;
+  overflow-y: auto;
+}
+.preview-sticky-bar {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+.paper-spec-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.canvas-wrapper {
+  background: #cbd5e1;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #94a3b8;
+}
+canvas#globalPaper {
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: block;
+}
+
+/* ACTION BUTTONS */
+.action-buttons {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 120px;
+}
+.btn:hover {
+  background: var(--border);
+}
+.btn.primary {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+.btn.primary:hover {
+  background: var(--primary-hover);
+}
+.btn.accent {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+.btn.sm {
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: auto;
+}
+
+/* FORM CONTROLS */
+.form-group {
+  margin-bottom: 14px;
+}
+label.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.form-control, select.form-control, textarea.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-control:focus {
+  border-color: var(--primary);
+}
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.form-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+  margin: 8px 0;
+}
+.form-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* COLLAPSIBLE / CARDS IN EDITOR */
+.editor-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.editor-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* NOTICE / ALERT BOX */
+.alert-box {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.alert-box.info {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent);
+}
+.alert-box.warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--warning);
+}
+
+/* MODAL FOR HARDWARE & SAVED DESIGNS */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal-window {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.modal-body {
+  padding: 20px;
+  flex: 1;
+}
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* PIXEL ART CANVAS & PALETTE */
+.pixel-editor-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+#pixelCanvas {
+  border: 2px solid var(--border);
+  background: #ffffff;
+  cursor: crosshair;
+  image-rendering: pixelated;
+}
+.pixel-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* MOBILE TOGGLE & RESPONSIVENESS */
+.mobile-view-tabs {
+  display: none;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  z-index: 95;
+  justify-content: space-around;
+}
+.mobile-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mobile-tab-btn.active {
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+@media(max-width: 900px) {
+  .app-container {
+    flex-direction: column;
+  }
+  aside.sidebar {
+    width: 100%;
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  aside.sidebar.collapsed {
+    display: none;
+  }
+  .view-module {
+    flex-direction: column;
+  }
+  .module-editor {
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-preview-pane {
+    min-width: 100%;
+  }
+  .mobile-view-tabs {
+    display: flex;
+  }
+}
+
+/* PRINT CSS OPTIMIZED FOR 58mm / 80mm THERMAL ROLLS */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  header.top-bar, aside.sidebar, .module-editor, .action-buttons, .preview-sticky-bar, .mobile-view-tabs, .modal-overlay {
+    display: none !important;
+  }
+  .app-container, main.workspace, .view-module, .module-preview-pane {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    width: 100% !important;
+  }
+  .canvas-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+  canvas#globalPaper {
+    width: 58mm !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    margin: 0 auto !important;
+  }
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- TOP HEADER -->
+<header class="top-bar">
+  <div class="brand" onclick="navigateTo('dashboard')">
+    <div class="brand-icon">E</div>
+    <div class="brand-text">
+      <h1>EZO PRINT STUDIO</h1>
+      <p>Mini Printing Workstation • 58D Thermal Engine</p>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <div class="badge-status" id="printerStatusBtn" onclick="openHardwareModal()">
+      <span class="status-dot" id="printerStatusDot"></span>
+      <span id="printerStatusText">Printer: Ready (Browser)</span>
+    </div>
+
+    <!-- Paper width selector -->
+    <select class="form-control" id="globalPaperWidth" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()">
+      <option value="384" selected>58 mm Roll (384 px)</option>
+      <option value="576">80 mm Roll (576 px)</option>
+    </select>
+
+    <!-- Vertical Stretch for bold thermal double-height -->
+    <select class="form-control" id="globalStretch" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()" title="Vertical Stretch for thermal clarity">
+      <option value="1.0">Stretch: 1.0x (Normal)</option>
+      <option value="1.2" selected>Stretch: 1.2x (Tall/Clear)</option>
+      <option value="1.35">Stretch: 1.35x (Double Height)</option>
+    </select>
+
+    <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+    <button class="btn-icon" onclick="openSavedDesignsModal()" title="Saved Designs">💾</button>
+  </div>
+</header>
+
+<div class="app-container">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="appSidebar">
+    <div class="sidebar-search">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="toolSearchInput" placeholder="Search printing tools..." oninput="filterTools(this.value)">
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNavList">
+      <div class="nav-item active" data-tool="dashboard" onclick="navigateTo('dashboard')">
+        <span class="icon">🏠</span> <span>Dashboard</span>
+      </div>
+
+      <div class="nav-group-title">Core Printing</div>
+      <div class="nav-item" data-tool="bill" onclick="navigateTo('bill')">
+        <span class="icon">🧾</span> <span>Bill / Hotel Receipt</span> <span class="fav-star" onclick="toggleFav(event, 'bill')">★</span>
+      </div>
+      <div class="nav-item" data-tool="text" onclick="navigateTo('text')">
+        <span class="icon">📄</span> <span>Text & Notes</span> <span class="fav-star" onclick="toggleFav(event, 'text')">★</span>
+      </div>
+      <div class="nav-item" data-tool="qr" onclick="navigateTo('qr')">
+        <span class="icon">📱</span> <span>QR Code Studio</span> <span class="fav-star" onclick="toggleFav(event, 'qr')">★</span>
+      </div>
+      <div class="nav-item" data-tool="photo" onclick="navigateTo('photo')">
+        <span class="icon">🖼️</span> <span>Photo & Dithering</span> <span class="fav-star" onclick="toggleFav(event, 'photo')">★</span>
+      </div>
+
+      <div class="nav-group-title">Labels & Badges</div>
+      <div class="nav-item" data-tool="sticker" onclick="navigateTo('sticker')">
+        <span class="icon">🏷️</span> <span>Sticker Maker</span> <span class="fav-star" onclick="toggleFav(event, 'sticker')">★</span>
+      </div>
+      <div class="nav-item" data-tool="barcode" onclick="navigateTo('barcode')">
+        <span class="icon">📊</span> <span>Barcode & Price Label</span> <span class="fav-star" onclick="toggleFav(event, 'barcode')">★</span>
+      </div>
+      <div class="nav-item" data-tool="bookmark" onclick="navigateTo('bookmark')">
+        <span class="icon">📑</span> <span>Bookmark Designer</span> <span class="fav-star" onclick="toggleFav(event, 'bookmark')">★</span>
+      </div>
+
+      <div class="nav-group-title">Business & Events</div>
+      <div class="nav-item" data-tool="kot" onclick="navigateTo('kot')">
+        <span class="icon">🍳</span> <span>Kitchen Order (KOT)</span> <span class="fav-star" onclick="toggleFav(event, 'kot')">★</span>
+      </div>
+      <div class="nav-item" data-tool="ticket" onclick="navigateTo('ticket')">
+        <span class="icon">🎟️</span> <span>Ticket & Token</span> <span class="fav-star" onclick="toggleFav(event, 'ticket')">★</span>
+      </div>
+
+      <div class="nav-group-title">Productivity & Learning</div>
+      <div class="nav-item" data-tool="planner" onclick="navigateTo('planner')">
+        <span class="icon">📅</span> <span>Daily Planner</span> <span class="fav-star" onclick="toggleFav(event, 'planner')">★</span>
+      </div>
+      <div class="nav-item" data-tool="notes" onclick="navigateTo('notes')">
+        <span class="icon">📚</span> <span>Study Notes Maker</span> <span class="fav-star" onclick="toggleFav(event, 'notes')">★</span>
+      </div>
+
+      <div class="nav-group-title">Creative & Fun</div>
+      <div class="nav-item" data-tool="pixel" onclick="navigateTo('pixel')">
+        <span class="icon">👾</span> <span>Pixel Art Creator</span> <span class="fav-star" onclick="toggleFav(event, 'pixel')">★</span>
+      </div>
+      <div class="nav-item" data-tool="quote" onclick="navigateTo('quote')">
+        <span class="icon">💬</span> <span>Quote Generator</span> <span class="fav-star" onclick="toggleFav(event, 'quote')">★</span>
+      </div>
+      <div class="nav-item" data-tool="surprise" onclick="navigateTo('surprise')">
+        <span class="icon">🎁</span> <span>Random Surprise</span> <span class="fav-star" onclick="toggleFav(event, 'surprise')">★</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="workspace">
+    <!-- DASHBOARD VIEW -->
+    <div class="view-dashboard" id="viewDashboard">
+      <div class="hero-banner">
+        <div>
+          <h2>Welcome to Ezo Print Studio</h2>
+          <p>Your complete mini thermal printing workstation for eZo 58D and standard POS printers. Design bills, labels, QR codes, stickers, tickets, and creative notes with precision 384px rendering.</p>
+        </div>
+        <div class="quick-stats">
+          <div class="stat-pill"><strong>14</strong> Printing Tools</div>
+          <div class="stat-pill"><strong>58 mm</strong> Default Width</div>
+          <div class="stat-pill"><strong>Offline</strong> Local Ready</div>
+        </div>
+      </div>
+
+      <!-- FAVORITES & RECENT -->
+      <div id="favoritesSection" style="display:none;">
+        <div class="section-title">⭐ Favorite Tools</div>
+        <div class="cards-grid" id="favoritesGrid"></div>
+      </div>
+
+      <div class="section-title">🌟 All Printing Modules</div>
+      <div class="cards-grid" id="allCardsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- MODULE WORKSPACE (DUAL PANE) -->
+    <div class="view-module" id="viewModule">
+      <!-- LEFT: TOOL EDITOR -->
+      <section class="module-editor" id="moduleEditorContainer">
+        <!-- Form injected dynamically based on current module -->
+      </section>
+
+      <!-- RIGHT: LIVE PREVIEW PANE -->
+      <section class="module-preview-pane">
+        <div class="preview-sticky-bar">
+          <span class="paper-spec-pill" id="previewDimensionLabel">384 px (58 mm)</span>
+          <span style="font-size: 11px; color: var(--text-dim);" id="renderTimeStatus">Rendered in 4ms</span>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="globalPaper" width="384" height="600"></canvas>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn primary" onclick="ExportManager.print()">🖨️ Print Receipt</button>
+          <button class="btn accent" onclick="ExportManager.downloadPNG()">📥 Download PNG</button>
+          <button class="btn sm" onclick="saveCurrentDesignPrompt()">💾 Save Design</button>
+          <button class="btn sm" onclick="triggerWebSerialDirectPrint()">⚡ Serial Print</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- HARDWARE & CONNECTION MODAL -->
+<div class="modal-overlay" id="hardwareModal">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h3>⚙️ Printer Connection & Hardware Setup</h3>
+      <button class="btn-icon" onclick="closeHardwareModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-box info">
+        ℹ️ The eZo 58D thermal printer supports Windows printer driver printing, Web Serial (USB/COM), and Bluetooth SPP/BLE depending on model configuration.
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">1. Standard Browser / Windows Driver Printing (Default)</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          Works with any thermal printer installed in Windows. Click Print, select your 58mm POS printer, and check "No Margins" in system print settings.
+        </p>
+        <button class="btn sm primary" onclick="window.print()">Test Browser Print</button>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">2. Web Serial API (Direct USB / COM Port)</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          Send raw ESC/POS text or raster image bytes directly from Chrome/Edge to your paired Bluetooth COM port or USB Serial port without third-party drivers.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn sm accent" onclick="ConnectionManager.connectSerial()">Connect COM Port</button>
+          <button class="btn sm" onclick="ConnectionManager.sendTestSerial()">Send Test Text</button>
+        </div>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">3. Web Bluetooth API (BLE Thermal)</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          If your eZo printer has BLE (Bluetooth Low Energy), pair directly inside the browser. (Note: Classic Bluetooth SPP requires the COM-port method or native app).
+        </p>
+        <button class="btn sm" onclick="ConnectionManager.connectBluetooth()">Scan BLE Printers</button>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">4. Windows Python Bridge Helper</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          Included in your workspace folder <code>windows/print_text.py</code>. Run in PowerShell:
+        </p>
+        <code style="display:block; background: var(--bg-input); padding: 8px; border-radius: 6px; font-size: 11px; font-family: var(--font-mono); color: var(--accent);">
+          py windows/print_text.py COM5 "TEST PRINT"
+        </code>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sm" onclick="closeHardwareModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED DESIGNS MODAL -->
+<div class="modal-overlay" id="savedDesignsModal">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h3>💾 Saved Designs & Print History</h3>
+      <button class="btn-icon" onclick="closeSavedDesignsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="savedDesignsListContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn sm" onclick="closeSavedDesignsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT SYSTEM: ENGINE, MODULES, APPLICATION -->
+<script>
+/* =========================================================================
+   1. CORE APP STATE & MODULE DIRECTORY
+   ========================================================================= */
+const MODULES = [
+  {
+    id: 'bill',
+    title: 'Bill / Hotel Receipt',
+    icon: '🧾',
+    tag: 'Core Printing',
+    desc: 'Professional restaurant/hotel bill with logo upload, bold items, tall vertical stretch, and GPay / UPI QR code.'
+  },
+  {
+    id: 'text',
+    title: 'Text & Notes',
+    icon: '📄',
+    tag: 'Core Printing',
+    desc: 'Custom headings, multi-line notes, Devanagari/Marathi support, and centered text formatting.'
+  },
+  {
+    id: 'qr',
+    title: 'QR Code Studio',
+    icon: '📱',
+    tag: 'Core Printing',
+    desc: 'Generate high-contrast scannable QR codes for UPI, Website, Wi-Fi, WhatsApp, and Contacts.'
+  },
+  {
+    id: 'photo',
+    title: 'Photo & Dithering',
+    icon: '🖼️',
+    tag: 'Core Printing',
+    desc: 'Image-to-thermal converter with Floyd-Steinberg and Atkinson dithering, rotate, and contrast control.'
+  },
+  {
+    id: 'sticker',
+    title: 'Sticker Maker',
+    icon: '🏷️',
+    tag: 'Labels',
+    desc: 'Fragile labels, thank-you stickers, homemade labels, 30x20mm, 40x30mm, 50x30mm adhesive presets.'
+  },
+  {
+    id: 'barcode',
+    title: 'Barcode & Price Label',
+    icon: '📊',
+    tag: 'Labels',
+    desc: 'Standard Code 128, verified EAN-13, UPC-A, product codes, MRP and sale pricing labels.'
+  },
+  {
+    id: 'bookmark',
+    title: 'Bookmark Designer',
+    icon: '📑',
+    tag: 'Labels',
+    desc: 'Quotes, reading tracker checklists, vintage borders, and tassel punch guide for manual cut.'
+  },
+  {
+    id: 'kot',
+    title: 'Kitchen Order (KOT)',
+    icon: '🍳',
+    tag: 'Business',
+    desc: 'Restaurant order token with table #, bold food quantities, highlighted special instructions, and reprint.'
+  },
+  {
+    id: 'ticket',
+    title: 'Ticket & Token',
+    icon: '🎟️',
+    tag: 'Business',
+    desc: 'Movie tickets, birthday passes, event vouchers, and queue tokens with barcode and tear-off stub.'
+  },
+  {
+    id: 'planner',
+    title: 'Daily Planner',
+    icon: '📅',
+    tag: 'Productivity',
+    desc: 'Daily to-do checklist with printable checkboxes [ ], schedule, habit tracker, and shopping lists.'
+  },
+  {
+    id: 'notes',
+    title: 'Study Notes Maker',
+    icon: '📚',
+    tag: 'Productivity',
+    desc: 'Compact revision sheets, math formula boxes, code snippet blocks, and definitions for quick study.'
+  },
+  {
+    id: 'pixel',
+    title: 'Pixel Art Creator',
+    icon: '👾',
+    tag: 'Creative',
+    desc: 'Interactive 16x16 / 24x24 / 32x32 drawing grid with pen, bucket fill, eraser, and direct print.'
+  },
+  {
+    id: 'quote',
+    title: 'Quote Generator',
+    icon: '💬',
+    tag: 'Creative',
+    desc: 'Motivational, life, attitude, Marathi (पुन्हा या!) and Hindi quotes with flourish frames.'
+  },
+  {
+    id: 'surprise',
+    title: 'Random Surprise',
+    icon: '🎁',
+    tag: 'Creative',
+    desc: 'Instant entertaining jokes, fun science facts, riddles, fortune cookies, and compliments.'
+  }
+];
+
+let currentTool = 'dashboard';
+let hotelLogoImg = null;
+let photoSourceImg = null;
+let favorites = JSON.parse(localStorage.getItem('ezo_favs') || '["bill", "sticker", "kot"]');
+let activePixelGridSize = 24;
+let pixelGrid = Array(activePixelGridSize * activePixelGridSize).fill(0);
+let pixelTool = 'pen'; // 'pen' | 'eraser'
+let kotHistory = JSON.parse(localStorage.getItem('ezo_kot_history') || '[]');
+
+/* =========================================================================
+   2. UNIVERSAL PRINT ENGINE (PrintEngine)
+   ========================================================================= */
+const PrintEngine = {
+  canvas: document.getElementById('globalPaper'),
+  get ctx() { return this.canvas.getContext('2d'); },
+
+  getWidth() {
+    return parseInt(document.getElementById('globalPaperWidth').value, 10) || 384;
+  },
+
+  getStretch() {
+    return parseFloat(document.getElementById('globalStretch').value) || 1.2;
+  },
+
+  begin(maxEstimatedHeight = 3200) {
+    const w = this.getWidth();
+    this.canvas.width = w;
+    this.canvas.height = maxEstimatedHeight;
+    const ctx = this.ctx;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, maxEstimatedHeight);
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    return { w, ctx, margin: 12, maxW: w - 24 };
+  },
+
+  finish(actualHeight) {
+    const w = this.getWidth();
+    const h = Math.max(100, Math.min(3200, Math.ceil(actualHeight)));
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = w;
+    tempCanvas.height = h;
+    const tCtx = tempCanvas.getContext('2d');
+    tCtx.drawImage(this.canvas, 0, 0, w, h, 0, 0, w, h);
+
+    this.canvas.height = h;
+    this.ctx.drawImage(tempCanvas, 0, 0);
+
+    document.getElementById('previewDimensionLabel').textContent = \`\${w} px (\${w === 384 ? '58 mm' : '80 mm'})\`;
+  },
+
+  drawDashedLine(ctx, y, x1, x2, pattern = [4, 3]) {
+    ctx.save();
+    ctx.setLineDash(pattern);
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000000';
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  drawDoubleLine(ctx, y, x1, x2) {
+    ctx.fillRect(x1, y, x2 - x1, 1);
+    ctx.fillRect(x1, y + 3, x2 - x1, 1);
+  },
+
+  wrapText(ctx, text, x, y, maxW, lineH) {
+    const words = String(text || '').split(/\\s+/);
+    let curLine = '';
+    for (const w of words) {
+      const test = curLine ? curLine + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && curLine) {
+        ctx.fillText(curLine, x, y);
+        y += lineH;
+        curLine = w;
+      } else {
+        curLine = test;
+      }
+    }
+    if (curLine) {
+      ctx.fillText(curLine, x, y);
+      y += lineH;
+    }
+    return y;
+  }
+};
+
+/* =========================================================================
+   3. BARCODE & QR GENERATORS
+   ========================================================================= */
+const BarcodeEngine = {
+  // Simple & reliable Code 128-B renderer for standard thermal labels
+  drawCode128(ctx, text, x, y, width, height) {
+    // Generate code 128 pattern table simplified
+    const patterns = {
+      '0': '11011001100', '1': '11001101100', '2': '11001100110', '3': '10010011000',
+      '4': '10010001100', '5': '10001001100', '6': '10011001000', '7': '10011000100',
+      '8': '10001100100', '9': '11001001000', 'A': '10110011100', 'B': '10011011100',
+      'C': '10011001110', 'D': '10111001100', 'E': '10011101100', 'F': '10011100110',
+      'G': '11001110010', 'H': '11001011100', 'I': '11001001110', 'J': '11011100100',
+      'K': '10110010000', 'L': '10011010000', 'M': '10011000010', 'N': '10100011000',
+      'O': '10001011000', 'P': '10001000110', 'Q': '10110001000', 'R': '10001101000',
+      'S': '10001100010', 'T': '11010001000', 'U': '11010010000', 'V': '11010000100',
+      'W': '11000101000', 'X': '11011101000', 'Y': '11011100010', 'Z': '11011101110',
+      '-': '10100110000', '.': '10100001100', ' ': '10010110000', '$': '10010000110'
+    };
+    const clean = String(text).toUpperCase().replace(/[^0-9A-Z-. $]/g, '');
+    let bitString = '11010010000'; // Start Code B
+    for (const ch of clean) {
+      bitString += patterns[ch] || '10100110000';
+    }
+    bitString += '1100011101011'; // Stop pattern
+    const barWidth = Math.max(1, Math.floor(width / bitString.length));
+    const startX = x + Math.floor((width - bitString.length * barWidth) / 2);
+
+    ctx.fillStyle = '#000000';
+    for (let i = 0; i < bitString.length; i++) {
+      if (bitString[i] === '1') {
+        ctx.fillRect(startX + i * barWidth, y, barWidth, height);
+      }
+    }
+    return height;
+  },
+
+  // EAN-13 Checksum validator & calculator
+  isValidEAN13(code) {
+    if (!/^[0-9]{13}$/.test(code)) return false;
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(code[i], 10) * (i % 2 === 0 ? 1 : 3);
+    }
+    const check = (10 - (sum % 10)) % 10;
+    return check === parseInt(code[12], 10);
+  }
+};
+
+/* =========================================================================
+   4. IMAGE PROCESSING & DITHERING ENGINE (Floyd-Steinberg & Atkinson)
+   ========================================================================= */
+const ImageProcessor = {
+  process(img, targetWidth, options = {}) {
+    const {
+      brightness = 0,
+      contrast = 0,
+      threshold = 128,
+      dither = 'floyd', // 'none' | 'floyd' | 'atkinson'
+      invert = false,
+      rotation = 0
+    } = options;
+
+    const scale = targetWidth / (rotation % 180 === 0 ? img.width : img.height);
+    const w = Math.round((rotation % 180 === 0 ? img.width : img.height) * scale);
+    const h = Math.round((rotation % 180 === 0 ? img.height : img.width) * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Handle rotation
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    if (rotation % 180 === 0) {
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    } else {
+      ctx.drawImage(img, -h / 2, -w / 2, h, w);
+    }
+    ctx.restore();
+
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+
+    // Apply brightness & contrast
+    const f = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    const gray = new Float32Array(w * h);
+
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i] + brightness;
+      let g = data[i + 1] + brightness;
+      let b = data[i + 2] + brightness;
+      r = Math.min(255, Math.max(0, f * (r - 128) + 128));
+      g = Math.min(255, Math.max(0, f * (g - 128) + 128));
+      b = Math.min(255, Math.max(0, f * (b - 128) + 128));
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      gray[i / 4] = invert ? 255 - lum : lum;
+    }
+
+    if (dither === 'floyd') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = y * w + x;
+          const oldVal = gray[idx];
+          const newVal = oldVal < threshold ? 0 : 255;
+          gray[idx] = newVal;
+          const err = oldVal - newVal;
+          if (x + 1 < w) gray[idx + 1] += (err * 7) / 16;
+          if (x - 1 >= 0 && y + 1 < h) gray[idx + w - 1] += (err * 3) / 16;
+          if (y + 1 < h) gray[idx + w] += (err * 5) / 16;
+          if (x + 1 < w && y + 1 < h) gray[idx + w + 1] += (err * 1) / 16;
+        }
+      }
+    } else if (dither === 'atkinson') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = y * w + x;
+          const oldVal = gray[idx];
+          const newVal = oldVal < threshold ? 0 : 255;
+          gray[idx] = newVal;
+          const err = Math.floor((oldVal - newVal) / 8);
+          if (x + 1 < w) gray[idx + 1] += err;
+          if (x + 2 < w) gray[idx + 2] += err;
+          if (x - 1 >= 0 && y + 1 < h) gray[idx + w - 1] += err;
+          if (y + 1 < h) gray[idx + w] += err;
+          if (x + 1 < w && y + 1 < h) gray[idx + w + 1] += err;
+          if (y + 2 < h) gray[idx + 2 * w] += err;
+        }
+      }
+    } else {
+      // Threshold only
+      for (let i = 0; i < gray.length; i++) {
+        gray[i] = gray[i] < threshold ? 0 : 255;
+      }
+    }
+
+    // Write back to canvas
+    for (let i = 0; i < gray.length; i++) {
+      const v = gray[i] < 128 ? 0 : 255;
+      data[i * 4] = v;
+      data[i * 4 + 1] = v;
+      data[i * 4 + 2] = v;
+      data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+  }
+};
+
+/* =========================================================================
+   5. RENDERERS FOR ALL 14 MODULES
+   ========================================================================= */
+
+/* --- MODULE 1: BILL / HOTEL RECEIPT (ENHANCED FOR USER) --- */
+function renderBillModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin(3200);
+  const stretch = PrintEngine.getStretch(); // e.g. 1.2 or 1.35
+  const fontMono = '"JetBrains Mono", "Courier New", monospace';
+  const fontDeva = '"Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif';
+
+  let y = 14;
+
+  // 1. HOTEL LOGO (IF UPLOADED)
+  if (hotelLogoImg) {
+    const logoW = Math.min(120, maxW * 0.4);
+    const processedLogo = ImageProcessor.process(hotelLogoImg, logoW, {
+      threshold: parseInt(document.getElementById('billLogoThresh')?.value || '140', 10),
+      invert: document.getElementById('billLogoInvert')?.checked || false,
+      dither: 'atkinson'
+    });
+    ctx.drawImage(processedLogo, (w - processedLogo.width) / 2, y);
+    y += processedLogo.height + 10;
+  }
+
+  // 2. HOTEL / STORE NAME (BOLD, LARGE, CENTERED)
+  const shopName = (document.getElementById('billShopName')?.value || 'PATIL VADAPAV').toUpperCase();
+  ctx.save();
+  ctx.scale(1, stretch);
+  const scaledY = y / stretch;
+  ctx.font = \`800 \${Math.round(20)}px \${fontDeva}\`;
+  ctx.textAlign = 'center';
+  ctx.fillText(shopName, w / 2, scaledY);
+  ctx.restore();
+  y += Math.round(26 * stretch);
+
+  // Address & Phone
+  const addr = document.getElementById('billShopAddr')?.value?.trim();
+  if (addr) {
+    ctx.font = \`600 12px \${fontDeva}\`;
+    ctx.textAlign = 'center';
+    ctx.fillText(addr, w / 2, y);
+    y += 16;
+  }
+  const phone = document.getElementById('billShopPhone')?.value?.trim();
+  if (phone) {
+    ctx.font = \`600 12px \${fontMono}\`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Ph: ' + phone, w / 2, y);
+    y += 16;
+  }
+
+  y += 4;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+
+  // Bill # & Date / Time
+  const billNo = document.getElementById('billNo')?.value || '001';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  ctx.font = \`700 13px \${fontMono}\`;
+  ctx.textAlign = 'left';
+  ctx.fillText('Bill #: ' + billNo, margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText('Dt: ' + dateStr, w - margin, y);
+  y += 16;
+
+  ctx.textAlign = 'left';
+  ctx.fillText('Time  : ' + timeStr, margin, y);
+  y += 14;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // 3. TABLE COLUMNS: ITEM (Left) | QTY | RATE | AMT (Right)
+  const colAmt = w - margin;
+  const colRate = margin + Math.round(maxW * 0.72);
+  const colQty = margin + Math.round(maxW * 0.50);
+  const nameMaxW = colQty - margin - 12;
+
+  ctx.font = \`800 14px \${fontMono}\`;
+  ctx.textAlign = 'left';
+  ctx.fillText('ITEM', margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText('QTY', colQty, y);
+  ctx.fillText('RATE', colRate, y);
+  ctx.fillText('AMT', colAmt, y);
+  y += 6;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+
+  // 4. ITEMS ROWS (ITEM NAMES IN BOLD)
+  let subtotal = 0;
+  const itemLines = (document.getElementById('billItems')?.value || '')
+    .split(/\\r?\\n/)
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const rowLineH = Math.round(18 * stretch);
+
+  for (const line of itemLines) {
+    const parts = line.split(',').map(s => s.trim());
+    const name = parts[0] || 'Item';
+    const qty = parseFloat(parts[1]) || 0;
+    const rate = parseFloat(parts[2]) || 0;
+    const amt = qty * rate;
+    subtotal += amt;
+
+    // Word wrap for long item names
+    ctx.font = \`800 14px \${fontDeva}\`; // BOLD ITEM NAME!
+    const words = name.split(/\\s+/);
+    const lines = [];
+    let cur = '';
+    for (const wd of words) {
+      const test = cur ? cur + ' ' + wd : wd;
+      if (ctx.measureText(test).width > nameMaxW && cur) {
+        lines.push(cur);
+        cur = wd;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    if (!lines.length) lines.push(name);
+
+    // First line
+    ctx.save();
+    ctx.scale(1, stretch);
+    const sy = y / stretch;
+    ctx.font = \`800 14px \${fontDeva}\`; // Bold item name
+    ctx.textAlign = 'left';
+    ctx.fillText(lines[0], margin, sy);
+
+    ctx.font = \`600 13px \${fontMono}\`;
+    ctx.textAlign = 'right';
+    ctx.fillText(String(qty), colQty, sy);
+    ctx.fillText(rate.toFixed(2), colRate, sy);
+    ctx.fillText(amt.toFixed(2), colAmt, sy);
+    ctx.restore();
+    y += rowLineH;
+
+    // Extra lines for long names
+    for (let i = 1; i < lines.length; i++) {
+      ctx.save();
+      ctx.scale(1, stretch);
+      ctx.font = \`800 14px \${fontDeva}\`;
+      ctx.textAlign = 'left';
+      ctx.fillText(lines[i], margin, y / stretch);
+      ctx.restore();
+      y += rowLineH;
+    }
+  }
+
+  y += 4;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+
+  // Subtotal
+  ctx.font = \`600 14px \${fontMono}\`;
+  ctx.textAlign = 'left';
+  ctx.fillText('Subtotal', margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(subtotal.toFixed(2), colAmt, y);
+  y += 18;
+
+  // Discount
+  const discount = parseFloat(document.getElementById('billDiscount')?.value) || 0;
+  if (discount > 0) {
+    ctx.fillText('Discount', margin, y);
+    ctx.fillText('-' + discount.toFixed(2), colAmt, y);
+    y += 18;
+  }
+
+  // Tax / GST
+  const tax = parseFloat(document.getElementById('billTax')?.value) || 0;
+  if (tax > 0) {
+    ctx.fillText('Tax / GST', margin, y);
+    ctx.fillText('+' + tax.toFixed(2), colAmt, y);
+    y += 18;
+  }
+
+  // GRAND TOTAL
+  const grandTotal = Math.max(0, subtotal - discount + tax);
+  y += 2;
+  PrintEngine.drawDoubleLine(ctx, y, margin, w - margin);
+  y += 18;
+
+  ctx.save();
+  ctx.scale(1, stretch);
+  const gY = y / stretch;
+  ctx.font = \`800 18px \${fontMono}\`;
+  ctx.textAlign = 'left';
+  ctx.fillText('GRAND TOTAL', margin, gY);
+  ctx.textAlign = 'right';
+  ctx.fillText('₹' + grandTotal.toFixed(2), colAmt, gY);
+  ctx.restore();
+  y += Math.round(24 * stretch);
+
+  PrintEngine.drawDoubleLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // 5. GPAY / UPI PAYMENT QR CODE (IF ENABLED)
+  const enableGpay = document.getElementById('billEnableGpay')?.checked ?? true;
+  const upiId = document.getElementById('billUpiId')?.value?.trim() || 'patilvadapav@okhdfcbank';
+
+  if (enableGpay && upiId && grandTotal > 0) {
+    ctx.font = \`700 12px \${fontMono}\`;
+    ctx.textAlign = 'center';
+    ctx.fillText('━ SCAN & PAY WITH GPAY / UPI ━', w / 2, y);
+    y += 16;
+
+    // Generate UPI URI
+    const upiUri = \`upi://pay?pa=\${encodeURIComponent(upiId)}&pn=\${encodeURIComponent(shopName)}&am=\${grandTotal.toFixed(2)}&cu=INR&tn=Bill%20\${billNo}\`;
+
+    // Render QR Code onto thermal canvas
+    const qrHolder = document.createElement('div');
+    const qrSize = Math.min(150, Math.round(maxW * 0.5));
+    try {
+      new QRCode(qrHolder, {
+        text: upiUri,
+        width: qrSize,
+        height: qrSize,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      const qImg = qrHolder.querySelector('canvas') || qrHolder.querySelector('img');
+      if (qImg) {
+        const qrX = Math.round((w - qrSize) / 2);
+        ctx.drawImage(qImg, qrX, y);
+        y += qrSize + 8;
+
+        ctx.font = \`800 13px \${fontMono}\`;
+        ctx.textAlign = 'center';
+        ctx.fillText(\`₹\${grandTotal.toFixed(2)}\`, w / 2, y);
+        y += 14;
+
+        ctx.font = \`600 11px \${fontMono}\`;
+        ctx.fillText(upiId, w / 2, y);
+        y += 18;
+      }
+    } catch (e) {
+      console.warn('QR generation error:', e);
+    }
+  }
+
+  // 6. FOOTER WITH MARATHI TEXT
+  const footerText = document.getElementById('billFooter')?.value?.trim() || 'Thank you for shopping! पुन्हा या!';
+  ctx.font = \`700 13px \${fontDeva}\`;
+  ctx.textAlign = 'center';
+  y = PrintEngine.wrapText(ctx, footerText, w / 2, y, maxW, 18);
+  y += 8;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 12;
+
+  PrintEngine.finish(y);
+}
+
+/* --- MODULE 2: TEXT & NOTES (Original + Enhanced) --- */
+function renderTextModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const heading = document.getElementById('textHeading')?.value || 'DHRUV';
+  const body = document.getElementById('textBody')?.value || '';
+  const align = document.getElementById('textAlign')?.value || 'left';
+  const size = parseInt(document.getElementById('textSize')?.value || '16', 10);
+  const fontDeva = '"Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif';
+
+  let y = 16;
+  if (heading) {
+    ctx.font = \`800 \${size + 6}px \${fontDeva}\`;
+    ctx.textAlign = 'center';
+    ctx.fillText(heading, w / 2, y);
+    y += size + 16;
+    PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+    y += 14;
+  }
+
+  ctx.font = \`500 \${size}px \${fontDeva}\`;
+  const lines = body.split(/\\r?\\n/);
+  for (const line of lines) {
+    if (!line.trim()) {
+      y += 10;
+      continue;
+    }
+    if (align === 'center') {
+      ctx.textAlign = 'center';
+      y = PrintEngine.wrapText(ctx, line, w / 2, y, maxW, size + 6);
+    } else {
+      ctx.textAlign = 'left';
+      y = PrintEngine.wrapText(ctx, line, margin, y, maxW, size + 6);
+    }
+    y += 4;
+  }
+
+  y += 10;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 14);
+}
+
+/* --- MODULE 3: QR CODE STUDIO --- */
+function renderQRModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const type = document.getElementById('qrType')?.value || 'url';
+  let qrPayload = document.getElementById('qrContent')?.value || 'https://google.com';
+  const heading = document.getElementById('qrHeading')?.value || 'SCAN ME';
+  const desc = document.getElementById('qrDesc')?.value || '';
+  const fontDeva = '"Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif';
+
+  if (type === 'wifi') {
+    const ssid = document.getElementById('qrWifiSsid')?.value || '';
+    const pass = document.getElementById('qrWifiPass')?.value || '';
+    const enc = document.getElementById('qrWifiEnc')?.value || 'WPA';
+    qrPayload = \`WIFI:S:\${ssid};T:\${enc};P:\${pass};;\`;
+  } else if (type === 'upi') {
+    const upi = document.getElementById('qrUpiId')?.value || '';
+    const name = document.getElementById('qrUpiName')?.value || '';
+    const am = document.getElementById('qrUpiAmt')?.value || '';
+    qrPayload = \`upi://pay?pa=\${upi}&pn=\${encodeURIComponent(name)}\${am ? '&am=' + am : ''}&cu=INR\`;
+  } else if (type === 'whatsapp') {
+    const num = document.getElementById('qrWaNum')?.value || '';
+    const msg = document.getElementById('qrWaMsg')?.value || '';
+    qrPayload = \`https://wa.me/\${num.replace(/\\D/g, '')}?text=\${encodeURIComponent(msg)}\`;
+  }
+
+  let y = 16;
+  if (heading) {
+    ctx.font = \`800 18px \${fontDeva}\`;
+    ctx.textAlign = 'center';
+    ctx.fillText(heading, w / 2, y);
+    y += 24;
+    PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+    y += 16;
+  }
+
+  const qrHolder = document.createElement('div');
+  const qrSize = Math.min(240, maxW - 20);
+  try {
+    new QRCode(qrHolder, {
+      text: qrPayload,
+      width: qrSize,
+      height: qrSize,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const qImg = qrHolder.querySelector('canvas') || qrHolder.querySelector('img');
+    if (qImg) {
+      const qX = (w - qrSize) / 2;
+      ctx.drawImage(qImg, qX, y);
+      y += qrSize + 14;
+    }
+  } catch (e) {
+    ctx.fillText('QR Generator Ready', w / 2, y);
+    y += 30;
+  }
+
+  if (desc) {
+    ctx.font = \`600 12px \${fontDeva}\`;
+    ctx.textAlign = 'center';
+    y = PrintEngine.wrapText(ctx, desc, w / 2, y, maxW, 16);
+    y += 8;
+  }
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- MODULE 4: PHOTO & DITHERING STUDIO --- */
+function renderPhotoModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  if (!photoSourceImg) {
+    ctx.font = '600 14px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Upload a photo to see thermal preview', w / 2, 80);
+    PrintEngine.finish(160);
+    return;
+  }
+
+  const brightness = parseInt(document.getElementById('photoBrightness')?.value || '0', 10);
+  const contrast = parseInt(document.getElementById('photoContrast')?.value || '0', 10);
+  const threshold = parseInt(document.getElementById('photoThreshold')?.value || '128', 10);
+  const dither = document.getElementById('photoDither')?.value || 'floyd';
+  const rotation = parseInt(document.getElementById('photoRotate')?.value || '0', 10);
+  const invert = document.getElementById('photoInvert')?.checked || false;
+
+  const processed = ImageProcessor.process(photoSourceImg, maxW, {
+    brightness, contrast, threshold, dither, rotation, invert
+  });
+
+  let y = 14;
+  ctx.drawImage(processed, margin, y);
+  y += processed.height + 12;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- MODULE 5: STICKER MAKER --- */
+function renderStickerModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const preset = document.getElementById('stickerPreset')?.value || 'custom';
+  const text1 = document.getElementById('stickerText1')?.value || 'FRAGILE';
+  const text2 = document.getElementById('stickerText2')?.value || 'HANDLE WITH CARE';
+  const border = document.getElementById('stickerBorder')?.value || 'double';
+  const copies = parseInt(document.getElementById('stickerCopies')?.value || '1', 10);
+
+  let y = 14;
+  for (let c = 0; c < copies; c++) {
+    const boxH = 120;
+    const bX = margin;
+    const bW = maxW;
+
+    // Draw border
+    ctx.lineWidth = border === 'thick' ? 4 : 2;
+    ctx.strokeStyle = '#000000';
+    if (border === 'dashed') {
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(bX, y, bW, boxH);
+      ctx.setLineDash([]);
+    } else if (border === 'double') {
+      ctx.strokeRect(bX, y, bW, boxH);
+      ctx.strokeRect(bX + 3, y + 3, bW - 6, boxH - 6);
+    } else {
+      ctx.strokeRect(bX, y, bW, boxH);
+    }
+
+    // Texts
+    ctx.textAlign = 'center';
+    ctx.font = '800 22px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(text1, w / 2, y + 30);
+
+    ctx.font = '700 13px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(text2, w / 2, y + 68);
+
+    ctx.font = '600 10px monospace';
+    ctx.fillText('★ ADHESIVE THERMAL ROLL ★', w / 2, y + 96);
+
+    y += boxH + 16;
+    if (c < copies - 1) {
+      PrintEngine.drawDashedLine(ctx, y - 8, margin, w - margin, [2, 2]);
+    }
+  }
+
+  PrintEngine.finish(y + 10);
+}
+
+/* --- MODULE 6: BARCODE & PRICE LABEL MAKER --- */
+function renderBarcodeModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const title = document.getElementById('barcodeProdName')?.value || 'SPECIAL VADAPAV';
+  const code = document.getElementById('barcodeNumber')?.value || 'VP-9021';
+  const mrp = document.getElementById('barcodeMrp')?.value || '30.00';
+  const price = document.getElementById('barcodePrice')?.value || '25.00';
+  const format = document.getElementById('barcodeFormat')?.value || 'code128';
+
+  let y = 14;
+  ctx.strokeRect(margin, y, maxW, 200);
+
+  // Product Name
+  ctx.font = '800 16px "Noto Sans Devanagari", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, w / 2, y + 16);
+  y += 40;
+
+  // Barcode
+  BarcodeEngine.drawCode128(ctx, code, margin + 10, y, maxW - 20, 55);
+  y += 60;
+
+  ctx.font = '700 12px monospace';
+  ctx.fillText(code, w / 2, y);
+  y += 20;
+
+  PrintEngine.drawDashedLine(ctx, y, margin + 4, w - margin - 4);
+  y += 12;
+
+  // Price & MRP
+  ctx.textAlign = 'left';
+  ctx.font = '600 12px monospace';
+  ctx.fillText('MRP: ₹' + mrp, margin + 12, y);
+
+  ctx.textAlign = 'right';
+  ctx.font = '800 16px monospace';
+  ctx.fillText('OUR PRICE: ₹' + price, w - margin - 12, y);
+  y += 35;
+
+  PrintEngine.finish(y + 20);
+}
+
+/* --- MODULE 7: TICKET & TOKEN GENERATOR --- */
+function renderTicketModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const title = document.getElementById('ticketTitle')?.value || 'LIVE CONCERT PASS';
+  const token = document.getElementById('ticketNumber')?.value || 'TOKEN #042';
+  const venue = document.getElementById('ticketVenue')?.value || 'AUDITORIUM HALL B';
+  const dateStr = document.getElementById('ticketDate')?.value || 'TODAY';
+  const name = document.getElementById('ticketName')?.value || 'VIP GUEST';
+
+  let y = 14;
+  // Border box
+  ctx.strokeRect(margin, y, maxW, 290);
+  ctx.strokeRect(margin + 2, y + 2, maxW - 4, 286);
+
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, w / 2, y + 20);
+  y += 48;
+
+  // Token Badge
+  ctx.fillRect(margin + 20, y, maxW - 40, 36);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 18px monospace';
+  ctx.fillText(token, w / 2, y + 8);
+  ctx.fillStyle = '#000000';
+  y += 50;
+
+  ctx.font = '600 12px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Date : ' + dateStr, margin + 16, y);
+  y += 18;
+  ctx.fillText('Venue: ' + venue, margin + 16, y);
+  y += 18;
+  ctx.fillText('Guest: ' + name, margin + 16, y);
+  y += 24;
+
+  // Tear off stub line
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin, [6, 4]);
+  ctx.font = '600 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('✂ TEAR-OFF ENTRY STUB ✂', w / 2, y + 8);
+  y += 28;
+
+  BarcodeEngine.drawCode128(ctx, token.replace(/[^A-Z0-9]/g, '') || 'PASS01', margin + 30, y, maxW - 60, 35);
+  y += 65;
+
+  PrintEngine.finish(y);
+}
+
+/* --- MODULE 8: KITCHEN ORDER TICKET (KOT) --- */
+function renderKotModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const rest = document.getElementById('kotRestName')?.value || 'PATIL RESTAURANT';
+  const kotNo = document.getElementById('kotTokenNo')?.value || 'KOT #12';
+  const table = document.getElementById('kotTableNo')?.value || 'Table 4 (Dine-in)';
+  const waiter = document.getElementById('kotServer')?.value || 'Suresh';
+  const itemsRaw = document.getElementById('kotItems')?.value || '2x Vadapav [NO ONION]\\n1x Chai [EXTRA HOT]\\n1x Samosa Plate';
+
+  let y = 14;
+  ctx.font = '800 18px "Noto Sans Devanagari", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(rest, w / 2, y);
+  y += 24;
+
+  ctx.fillRect(margin, y, maxW, 30);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 16px monospace';
+  ctx.fillText(\`\${kotNo} • \${table}\`, w / 2, y + 6);
+  ctx.fillStyle = '#000000';
+  y += 38;
+
+  const now = new Date();
+  ctx.font = '600 12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Server: ' + waiter, margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), w - margin, y);
+  y += 14;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+
+  // Items
+  const lines = itemsRaw.split(/\\r?\\n/).map(l => l.trim()).filter(Boolean);
+  for (const item of lines) {
+    ctx.font = '800 16px "Noto Sans Devanagari", sans-serif';
+    ctx.textAlign = 'left';
+    y = PrintEngine.wrapText(ctx, item, margin, y, maxW, 20);
+    y += 6;
+  }
+
+  y += 6;
+  PrintEngine.drawDoubleLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  ctx.font = '700 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('*** KITCHEN COPY • EXPEDITE ***', w / 2, y);
+  y += 16;
+
+  PrintEngine.finish(y);
+}
+
+/* --- MODULE 9: STUDY NOTES MAKER --- */
+function renderNotesModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const subject = document.getElementById('notesSubject')?.value || 'PHYSICS / MATHS REVISION';
+  const content = document.getElementById('notesContent')?.value || '# Newton 2nd Law\\nF = m * a\\n\\n# Key Points\\n* Force in Newtons\\n* Mass in kg\\n* Acceleration in m/s^2';
+
+  let y = 14;
+  ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(subject, w / 2, y);
+  y += 24;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+
+  const lines = content.split(/\\r?\\n/);
+  for (const line of lines) {
+    if (line.startsWith('# ')) {
+      ctx.font = '800 15px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(line.substring(2), margin, y);
+      y += 20;
+    } else if (line.startsWith('* ')) {
+      ctx.font = '600 13px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left';
+      y = PrintEngine.wrapText(ctx, '• ' + line.substring(2), margin + 6, y, maxW - 6, 17);
+      y += 2;
+    } else if (line.trim().length > 0) {
+      // Code or formula box
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(margin, y, maxW, 22);
+      ctx.fillStyle = '#000000';
+      ctx.font = '700 13px monospace';
+      ctx.fillText(line, margin + 6, y + 4);
+      y += 28;
+    } else {
+      y += 8;
+    }
+  }
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- MODULE 10: DAILY PLANNER --- */
+function renderPlannerModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const title = document.getElementById('planTitle')?.value || 'DAILY FOCUS & TASKS';
+  const tasksRaw = document.getElementById('planTasks')?.value || '08:00 AM - Morning Workout\\n10:00 AM - Shop Opening & Inventory\\n02:00 PM - Vendor Stock Orders\\n07:00 PM - Daily Account Settlement';
+
+  let y = 14;
+  ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, w / 2, y);
+  y += 20;
+
+  const now = new Date();
+  ctx.font = '600 12px monospace';
+  ctx.fillText(now.toDateString(), w / 2, y);
+  y += 18;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  const tasks = tasksRaw.split(/\\r?\\n/).filter(Boolean);
+  for (const task of tasks) {
+    // Draw checkbox
+    ctx.strokeRect(margin, y, 14, 14);
+    ctx.font = '600 13px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'left';
+    y = PrintEngine.wrapText(ctx, task, margin + 22, y, maxW - 22, 18);
+    y += 8;
+  }
+
+  y += 10;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 14);
+}
+
+/* --- MODULE 11: BOOKMARK DESIGNER --- */
+function renderBookmarkModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const quote = document.getElementById('bmQuote')?.value || 'A reader lives a thousand lives before he dies.';
+  const author = document.getElementById('bmAuthor')?.value || '- George R.R. Martin';
+  const name = document.getElementById('bmOwner')?.value || 'Dhruv Patil';
+
+  let y = 14;
+  const bW = maxW;
+  const bH = 360;
+
+  // Border with decorative corners
+  ctx.strokeRect(margin, y, bW, bH);
+  ctx.strokeRect(margin + 3, y + 3, bW - 6, bH - 6);
+
+  // Tassel punch guide
+  ctx.beginPath();
+  ctx.arc(w / 2, y + 24, 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.font = '600 9px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('CUT HOLE', w / 2, y + 36);
+  y += 60;
+
+  ctx.font = '800 18px serif';
+  ctx.fillText('❧ EX LIBRIS ❧', w / 2, y);
+  y += 24;
+
+  ctx.font = '700 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(name, w / 2, y);
+  y += 24;
+
+  PrintEngine.drawDashedLine(ctx, y, margin + 16, w - margin - 16);
+  y += 24;
+
+  ctx.font = 'italic 14px serif';
+  y = PrintEngine.wrapText(ctx, \`"\${quote}"\`, w / 2, y, maxW - 32, 20);
+  y += 12;
+
+  ctx.font = '700 12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(author, w / 2, y);
+  y += 40;
+
+  // Book tracker stars
+  ctx.font = '16px monospace';
+  ctx.fillText('★ ★ ★ ★ ★', w / 2, y);
+
+  PrintEngine.finish(380);
+}
+
+/* --- MODULE 12: PIXEL ART CREATOR --- */
+function renderPixelModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const sz = activePixelGridSize;
+  const cellSize = Math.floor(maxW / sz);
+  const startX = margin + Math.floor((maxW - cellSize * sz) / 2);
+
+  let y = 20;
+  ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('PIXEL ART CREATION', w / 2, y);
+  y += 24;
+
+  for (let r = 0; r < sz; r++) {
+    for (let c = 0; c < sz; c++) {
+      const idx = r * sz + c;
+      if (pixelGrid[idx] === 1) {
+        ctx.fillRect(startX + c * cellSize, y + r * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+
+  y += sz * cellSize + 16;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- MODULE 13: QUOTE GENERATOR --- */
+function renderQuoteModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const quote = document.getElementById('quoteText')?.value || 'स्वप्न मोठे ठेवा, मेहनत त्याहून मोठी करा.';
+  const author = document.getElementById('quoteAuthor')?.value || '- सुविचार';
+  const fontDeva = '"Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif';
+
+  let y = 20;
+  ctx.font = '800 20px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('✦ ✦ ✦', w / 2, y);
+  y += 24;
+
+  ctx.font = \`700 16px \${fontDeva}\`;
+  y = PrintEngine.wrapText(ctx, quote, w / 2, y, maxW - 16, 24);
+  y += 14;
+
+  ctx.font = \`600 13px \${fontDeva}\`;
+  ctx.fillText(author, w / 2, y);
+  y += 24;
+
+  ctx.font = '800 20px monospace';
+  ctx.fillText('✦ ✦ ✦', w / 2, y);
+  y += 20;
+
+  PrintEngine.finish(y);
+}
+
+/* --- MODULE 14: RANDOM SURPRISE GENERATOR --- */
+function renderSurpriseModule() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const cat = document.getElementById('surpriseCategory')?.value || 'joke';
+  const text = document.getElementById('surpriseContent')?.value || 'Why do programmers prefer dark mode? Because light attracts bugs!';
+  const fontDeva = '"Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif';
+
+  let y = 18;
+  ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎁 DAILY SURPRISE 🎁', w / 2, y);
+  y += 22;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 18;
+
+  ctx.font = \`600 15px \${fontDeva}\`;
+  y = PrintEngine.wrapText(ctx, text, w / 2, y, maxW - 10, 22);
+  y += 20;
+
+  ctx.font = '700 11px monospace';
+  ctx.fillText('*** PRINTED FROM EZO PRINT STUDIO ***', w / 2, y);
+  y += 16;
+
+  PrintEngine.finish(y);
+}
+
+/* =========================================================================
+   6. EXPORT MANAGER (PRINT, PNG, ESC/POS)
+   ========================================================================= */
+const ExportManager = {
+  print() {
+    renderCurrentTool();
+    setTimeout(() => {
+      window.print();
+    }, 120);
+  },
+
+  downloadPNG() {
+    renderCurrentTool();
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.download = \`ezo-\${currentTool}-\${Date.now()}.png\`;
+      a.href = PrintEngine.canvas.toDataURL('image/png');
+      a.click();
+    }, 100);
+  }
+};
+
+/* =========================================================================
+   7. WEB SERIAL & BLUETOOTH PRINTER HARDWARE MANAGER
+   ========================================================================= */
+const ConnectionManager = {
+  serialPort: null,
+  writer: null,
+
+  async connectSerial() {
+    if (!('serial' in navigator)) {
+      alert('Web Serial API is supported in Google Chrome, Microsoft Edge, and Opera on Windows/Android. Ensure you use a Chromium browser.');
+      return;
+    }
+    try {
+      this.serialPort = await navigator.serial.requestPort();
+      await this.serialPort.open({ baudRate: 9600 });
+      document.getElementById('printerStatusDot').className = 'status-dot connected';
+      document.getElementById('printerStatusText').textContent = 'Serial: Connected';
+      alert('Connected to thermal printer via Web Serial!');
+    } catch (err) {
+      console.error(err);
+      alert('Serial connection cancelled or failed: ' + err.message);
+    }
+  },
+
+  async sendTestSerial() {
+    if (!this.serialPort) {
+      alert('Please connect via Web Serial first.');
+      return;
+    }
+    try {
+      const encoder = new TextEncoder();
+      const writer = this.serialPort.writable.getWriter();
+      const escInit = new Uint8Array([0x1b, 0x40]); // ESC @ (Initialize)
+      const text = encoder.encode('*** EZO PRINT STUDIO TEST ***\\n\\n\\n');
+      await writer.write(escInit);
+      await writer.write(text);
+      writer.releaseLock();
+      alert('Test print command sent to serial port!');
+    } catch (err) {
+      alert('Write failed: ' + err.message);
+    }
+  },
+
+  async connectBluetooth() {
+    if (!('bluetooth' in navigator)) {
+      alert('Web Bluetooth is supported in Chrome/Edge. Note that thermal printers with Bluetooth Classic SPP require COM port pairing, whereas BLE printers can be connected here.');
+      return;
+    }
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+      });
+      document.getElementById('printerStatusDot').className = 'status-dot connected';
+      document.getElementById('printerStatusText').textContent = 'BLE: ' + device.name;
+      alert('Paired with BLE Device: ' + device.name);
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+};
+
+function triggerWebSerialDirectPrint() {
+  if (ConnectionManager.serialPort) {
+    ConnectionManager.sendTestSerial();
+  } else {
+    openHardwareModal();
+  }
+}
+
+/* =========================================================================
+   8. LOCAL STORAGE & SAVED DESIGNS
+   ========================================================================= */
+function saveCurrentDesignPrompt() {
+  const name = prompt('Enter a name for this design:', \`My \${currentTool.toUpperCase()} Design\`);
+  if (!name) return;
+  const saved = JSON.parse(localStorage.getItem('ezo_saved_designs') || '[]');
+  saved.unshift({
+    id: 'des_' + Date.now(),
+    tool: currentTool,
+    name: name,
+    date: new Date().toLocaleDateString(),
+    thumb: PrintEngine.canvas.toDataURL('image/png')
+  });
+  localStorage.setItem('ezo_saved_designs', JSON.stringify(saved.slice(0, 30)));
+  alert('Design saved locally!');
+}
+
+function openSavedDesignsModal() {
+  const list = document.getElementById('savedDesignsListContainer');
+  const saved = JSON.parse(localStorage.getItem('ezo_saved_designs') || '[]');
+  if (!saved.length) {
+    list.innerHTML = '<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No saved designs yet.</p>';
+  } else {
+    list.innerHTML = saved.map(item => \`
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; border-bottom:1px solid var(--border);">
+        <img src="\${item.thumb}" style="width:40px; height:50px; object-fit:contain; background:#fff; border-radius:4px;">
+        <div style="flex:1;">
+          <strong style="font-size:13px;">\${item.name}</strong>
+          <p style="font-size:11px; color:var(--text-muted);">Tool: \${item.tool} • \${item.date}</p>
+        </div>
+        <button class="btn sm" onclick="loadSavedDesign('\${item.id}')">Open</button>
+        <button class="btn sm" onclick="deleteSavedDesign('\${item.id}')" style="color:var(--danger);">🗑️</button>
+      </div>
+    \`).join('');
+  }
+  document.getElementById('savedDesignsModal').classList.add('open');
+}
+
+function closeSavedDesignsModal() {
+  document.getElementById('savedDesignsModal').classList.remove('open');
+}
+
+function deleteSavedDesign(id) {
+  let saved = JSON.parse(localStorage.getItem('ezo_saved_designs') || '[]');
+  saved = saved.filter(x => x.id !== id);
+  localStorage.setItem('ezo_saved_designs', JSON.stringify(saved));
+  openSavedDesignsModal();
+}
+
+function loadSavedDesign(id) {
+  const saved = JSON.parse(localStorage.getItem('ezo_saved_designs') || '[]');
+  const item = saved.find(x => x.id === id);
+  if (item) {
+    closeSavedDesignsModal();
+    navigateTo(item.tool);
+  }
+}
+
+/* =========================================================================
+   9. NAVIGATION & ROUTING
+   ========================================================================= */
+function navigateTo(toolId) {
+  currentTool = toolId;
+
+  // Update sidebar active status
+  document.querySelectorAll('#sidebarNavList .nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tool === toolId);
+  });
+
+  const dashView = document.getElementById('viewDashboard');
+  const modView = document.getElementById('viewModule');
+
+  if (toolId === 'dashboard') {
+    dashView.style.display = 'block';
+    modView.classList.remove('active');
+    renderDashboardCards();
+  } else {
+    dashView.style.display = 'none';
+    modView.classList.add('active');
+    renderModuleEditor(toolId);
+    renderCurrentTool();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderCurrentTool() {
+  const start = performance.now();
+  switch (currentTool) {
+    case 'bill': renderBillModule(); break;
+    case 'text': renderTextModule(); break;
+    case 'qr': renderQRModule(); break;
+    case 'photo': renderPhotoModule(); break;
+    case 'sticker': renderStickerModule(); break;
+    case 'barcode': renderBarcodeModule(); break;
+    case 'ticket': renderTicketModule(); break;
+    case 'kot': renderKotModule(); break;
+    case 'notes': renderNotesModule(); break;
+    case 'planner': renderPlannerModule(); break;
+    case 'bookmark': renderBookmarkModule(); break;
+    case 'pixel': renderPixelModule(); break;
+    case 'quote': renderQuoteModule(); break;
+    case 'surprise': renderSurpriseModule(); break;
+  }
+  const elapsed = Math.round(performance.now() - start);
+  const statusEl = document.getElementById('renderTimeStatus');
+  if (statusEl) statusEl.textContent = \`Rendered in \${elapsed}ms\`;
+}
+
+function onGlobalSettingsChange() {
+  renderCurrentTool();
+}
+
+/* =========================================================================
+   10. MODULE EDITORS (DYNAMIC INJECTION)
+   ========================================================================= */
+function renderModuleEditor(id) {
+  const container = document.getElementById('moduleEditorContainer');
+  const mod = MODULES.find(m => m.id === id);
+  if (!mod) return;
+
+  let html = \`
+    <div class="module-header">
+      <div class="module-header-title">
+        <span class="mod-icon">\${mod.icon}</span>
+        <div>
+          <h2>\${mod.title}</h2>
+          <p style="font-size:12px; color:var(--text-muted);">\${mod.desc}</p>
+        </div>
+      </div>
+      <button class="btn sm" onclick="navigateTo('dashboard')">← Dashboard</button>
+    </div>
+  \`;
+
+  if (id === 'bill') {
+    html += \`
+      <div class="editor-card">
+        <div class="editor-card-title">🏨 Hotel / Store Details & Logo</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Shop / Hotel Name</label>
+            <input type="text" class="form-control" id="billShopName" value="PATIL VADAPAV" oninput="renderBillModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bill / Receipt #</label>
+            <input type="text" class="form-control" id="billNo" value="001" oninput="renderBillModule()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Address (optional)</label>
+            <input type="text" class="form-control" id="billShopAddr" placeholder="e.g. Station Road, Near City Mall" oninput="renderBillModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone # (optional)</label>
+            <input type="text" class="form-control" id="billShopPhone" placeholder="e.g. +91 98765 43210" oninput="renderBillModule()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Upload Hotel Logo (Optional)</label>
+          <input type="file" class="form-control" id="billLogoInput" accept="image/*" onchange="handleHotelLogoUpload(event)">
+        </div>
+        <div class="form-row" id="logoSettingsRow" style="display:\${hotelLogoImg ? 'grid' : 'none'};">
+          <div class="form-group">
+            <label class="form-label">Logo Threshold</label>
+            <input type="range" id="billLogoThresh" min="50" max="220" value="140" oninput="renderBillModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-check" style="margin-top:20px;">
+              <input type="checkbox" id="billLogoInvert" onchange="renderBillModule()"> Invert Logo
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">🛒 Bill Items (Format: Name, Qty, Rate)</div>
+        <div class="form-group">
+          <textarea class="form-control" id="billItems" rows="4" oninput="renderBillModule()">Special Vadapav, 3, 20
+Amul Butter Vadapav, 2, 30
+Masala Chai, 3, 10
+Cold Drink, 1, 20</textarea>
+          <span class="form-hint">Item names are automatically bolded and formatted to wrap properly without overlapping prices.</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Discount ₹</label>
+            <input type="number" class="form-control" id="billDiscount" value="0" oninput="renderBillModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tax / GST ₹</label>
+            <input type="number" class="form-control" id="billTax" value="0" oninput="renderBillModule()">
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">📱 GPay / UPI Dynamic Payment QR Code</div>
+        <label class="form-check">
+          <input type="checkbox" id="billEnableGpay" checked onchange="renderBillModule()"> Add GPay / PhonePe / Paytm Scan & Pay QR Code
+        </label>
+        <div class="form-group">
+          <label class="form-label">Merchant UPI ID</label>
+          <input type="text" class="form-control" id="billUpiId" value="patilvadapav@okhdfcbank" oninput="renderBillModule()">
+          <span class="form-hint">Customers can scan directly with Google Pay, PhonePe, or Paytm to pay the exact Grand Total.</span>
+        </div>
+      </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">💬 Receipt Footer</div>
+        <div class="form-group">
+          <input type="text" class="form-control" id="billFooter" value="Thank you for shopping! पुन्हा या!" oninput="renderBillModule()">
+          <span class="form-hint">Supports Marathi / Devanagari text ("पुन्हा या!").</span>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'text') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Heading / नाव</label>
+          <input type="text" class="form-control" id="textHeading" value="DHRUV" oninput="renderTextModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Text / मजकूर</label>
+          <textarea class="form-control" id="textBody" rows="6" oninput="renderTextModule()">नमस्कार!
+This is my eZo 58D thermal test print.
+स्वप्न मोठे ठेवा, मेहनत त्याहून मोठी करा.</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Alignment</label>
+            <select class="form-control" id="textAlign" onchange="renderTextModule()">
+              <option value="left">Left</option>
+              <option value="center" selected>Center</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Font Size</label>
+            <select class="form-control" id="textSize" onchange="renderTextModule()">
+              <option value="14">Small (14px)</option>
+              <option value="17" selected>Normal (17px)</option>
+              <option value="22">Large (22px)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'qr') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">QR Code Type</label>
+          <select class="form-control" id="qrType" onchange="handleQRTypeChange()">
+            <option value="url">Website / Custom URL</option>
+            <option value="upi">UPI / GPay Payment</option>
+            <option value="wifi">Wi-Fi Network Credentials</option>
+            <option value="whatsapp">WhatsApp Direct Chat</option>
+            <option value="text">Plain Text</option>
+          </select>
+        </div>
+        <div id="qrDynamicFields">
+          <div class="form-group">
+            <label class="form-label">URL or Content</label>
+            <input type="text" class="form-control" id="qrContent" value="https://ezoprint.com" oninput="renderQRModule()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Heading (Optional)</label>
+            <input type="text" class="form-control" id="qrHeading" value="SCAN TO CONNECT" oninput="renderQRModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description (Optional)</label>
+            <input type="text" class="form-control" id="qrDesc" value="Scan with any camera app" oninput="renderQRModule()">
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'photo') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Select Photo (JPG, PNG, WEBP)</label>
+          <input type="file" class="form-control" id="photoFileInput" accept="image/*" onchange="handlePhotoUpload(event)">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Dithering Algorithm</label>
+            <select class="form-control" id="photoDither" onchange="renderPhotoModule()">
+              <option value="floyd" selected>Floyd-Steinberg Error Diffusion</option>
+              <option value="atkinson">Atkinson (Retro Thermal Look)</option>
+              <option value="none">Threshold Only (1-Bit)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rotation</label>
+            <select class="form-control" id="photoRotate" onchange="renderPhotoModule()">
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Brightness</label>
+            <input type="range" id="photoBrightness" min="-100" max="100" value="0" oninput="renderPhotoModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contrast</label>
+            <input type="range" id="photoContrast" min="-100" max="100" value="20" oninput="renderPhotoModule()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Threshold</label>
+            <input type="range" id="photoThreshold" min="30" max="220" value="128" oninput="renderPhotoModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-check" style="margin-top:24px;">
+              <input type="checkbox" id="photoInvert" onchange="renderPhotoModule()"> Invert Black/White
+            </label>
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'sticker') {
+    html += \`
+      <div class="alert-box warning">
+        ⚠️ <strong>Note:</strong> Adhesive thermal roll paper is required for sticky labels. Output prints continuously on the roll for manual scissor cut.
+      </div>
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Preset Template</label>
+          <select class="form-control" id="stickerPreset" onchange="applyStickerPreset(this.value)">
+            <option value="fragile">FRAGILE - Handle With Care</option>
+            <option value="thankyou">THANK YOU FOR YOUR ORDER</option>
+            <option value="homemade">HOMEMADE WITH LOVE</option>
+            <option value="batch">BATCH / EXPIRY LABEL</option>
+            <option value="custom">Custom Sticker</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Main Heading</label>
+          <input type="text" class="form-control" id="stickerText1" value="FRAGILE" oninput="renderStickerModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subtext / Details</label>
+          <input type="text" class="form-control" id="stickerText2" value="HANDLE WITH CARE • GLASS INSIDE" oninput="renderStickerModule()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Border Style</label>
+            <select class="form-control" id="stickerBorder" onchange="renderStickerModule()">
+              <option value="double" selected>Double Line</option>
+              <option value="thick">Thick Solid</option>
+              <option value="dashed">Dashed Line</option>
+              <option value="thin">Thin Line</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Copies on Roll</label>
+            <select class="form-control" id="stickerCopies" onchange="renderStickerModule()">
+              <option value="1" selected>1 Sticker</option>
+              <option value="2">2 Stickers</option>
+              <option value="3">3 Stickers</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'barcode') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Product Name</label>
+          <input type="text" class="form-control" id="barcodeProdName" value="SPECIAL VADAPAV" oninput="renderBarcodeModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Barcode / SKU Number</label>
+          <input type="text" class="form-control" id="barcodeNumber" value="VP-9021" oninput="renderBarcodeModule()">
+          <span class="form-hint">Supports alphanumeric Code-128 standard.</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">MRP ₹</label>
+            <input type="text" class="form-control" id="barcodeMrp" value="30.00" oninput="renderBarcodeModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sale Price ₹</label>
+            <input type="text" class="form-control" id="barcodePrice" value="25.00" oninput="renderBarcodeModule()">
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'kot') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Restaurant Name</label>
+            <input type="text" class="form-control" id="kotRestName" value="PATIL RESTAURANT" oninput="renderKotModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Token / KOT #</label>
+            <input type="text" class="form-control" id="kotTokenNo" value="KOT #14" oninput="renderKotModule()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Table / Type</label>
+            <input type="text" class="form-control" id="kotTableNo" value="Table 4 (Dine-in)" oninput="renderKotModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waiter / Server</label>
+            <input type="text" class="form-control" id="kotServer" value="Suresh" oninput="renderKotModule()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kitchen Order Items</label>
+          <textarea class="form-control" id="kotItems" rows="4" oninput="renderKotModule()">2x Special Vadapav [NO ONION]
+1x Misal Pav [EXTRA RASA]
+2x Masala Chai</textarea>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'ticket') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Event / Pass Title</label>
+          <input type="text" class="form-control" id="ticketTitle" value="LIVE MUSIC CONCERT" oninput="renderTicketModule()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Token / Pass #</label>
+            <input type="text" class="form-control" id="ticketNumber" value="PASS #089" oninput="renderTicketModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date & Time</label>
+            <input type="text" class="form-control" id="ticketDate" value="TONIGHT 08:00 PM" oninput="renderTicketModule()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Venue</label>
+            <input type="text" class="form-control" id="ticketVenue" value="GRAND CITY AUDITORIUM" oninput="renderTicketModule()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Guest / Attendee Name</label>
+            <input type="text" class="form-control" id="ticketName" value="VIP GUEST" oninput="renderTicketModule()">
+          </div>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'notes') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Subject / Header</label>
+          <input type="text" class="form-control" id="notesSubject" value="PHYSICS: NEWTON LAWS" oninput="renderNotesModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes Content (Markdown style: # Header, * Bullet, Formula)</label>
+          <textarea class="form-control" id="notesContent" rows="8" oninput="renderNotesModule()"># 1st Law (Inertia)
+Body remains at rest unless acted on by external force.
+
+# 2nd Law (Force)
+F = m * a
+* F = Force in Newtons
+* m = Mass (kg)
+* a = Acceleration (m/s^2)
+
+# 3rd Law (Action/Reaction)
+Every action has an equal and opposite reaction.</textarea>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'planner') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Planner Title</label>
+          <input type="text" class="form-control" id="planTitle" value="DAILY SCHEDULE & TASKS" oninput="renderPlannerModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tasks (one per line, printed with [ ] checkboxes)</label>
+          <textarea class="form-control" id="planTasks" rows="6" oninput="renderPlannerModule()">08:00 AM - Morning Workout & Meditation
+10:00 AM - Open Store & Stock Verification
+01:30 PM - Customer Bill Audit
+04:00 PM - Call Vendor for Paper Rolls
+08:00 PM - Close Daily Register</textarea>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'bookmark') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Book Reader Name</label>
+          <input type="text" class="form-control" id="bmOwner" value="Dhruv Patil" oninput="renderBookmarkModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Favorite Quote</label>
+          <textarea class="form-control" id="bmQuote" rows="3" oninput="renderBookmarkModule()">A reader lives a thousand lives before he dies. The man who never reads lives only one.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Author</label>
+          <input type="text" class="form-control" id="bmAuthor" value="- George R.R. Martin" oninput="renderBookmarkModule()">
+        </div>
+      </div>
+    \`;
+  } else if (id === 'pixel') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Grid Size</label>
+            <select class="form-control" onchange="changePixelGridSize(+this.value)">
+              <option value="16">16 × 16</option>
+              <option value="24" selected>24 × 24</option>
+              <option value="32">32 × 32</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tool</label>
+            <div style="display:flex; gap:6px;">
+              <button class="btn sm" onclick="setPixelTool('pen')">✏️ Pen</button>
+              <button class="btn sm" onclick="setPixelTool('eraser')">🧹 Eraser</button>
+              <button class="btn sm" onclick="clearPixelGrid()">🗑️ Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="pixel-editor-wrap">
+          <canvas id="pixelCanvas" width="288" height="288"></canvas>
+          <span class="form-hint">Draw pixel art on the grid above. It renders instantly onto the thermal preview.</span>
+        </div>
+      </div>
+    \`;
+  } else if (id === 'quote') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Select Pre-loaded Inspiration</label>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <button class="btn sm" onclick="loadRandomQuote('marathi')">Marathi Quote</button>
+            <button class="btn sm" onclick="loadRandomQuote('english')">English Quote</button>
+            <button class="btn sm" onclick="loadRandomQuote('hindi')">Hindi Quote</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quote Text</label>
+          <textarea class="form-control" id="quoteText" rows="3" oninput="renderQuoteModule()">स्वप्न मोठे ठेवा, मेहनत त्याहून मोठी करा.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Author / Tagline</label>
+          <input type="text" class="form-control" id="quoteAuthor" value="- सुविचार" oninput="renderQuoteModule()">
+        </div>
+      </div>
+    \`;
+  } else if (id === 'surprise') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-control" id="surpriseCategory" onchange="generateRandomSurprise()">
+            <option value="joke">Programming & Dad Jokes</option>
+            <option value="fact">Mind-Blowing Science Facts</option>
+            <option value="riddle">Tricky Riddles</option>
+            <option value="fortune">Fortune Cookie Wisdom</option>
+            <option value="compliment">Sweet Compliments</option>
+          </select>
+        </div>
+        <button class="btn sm primary" style="width:100%; margin-bottom:12px;" onclick="generateRandomSurprise()">🎲 Roll Another Surprise!</button>
+        <div class="form-group">
+          <label class="form-label">Surprise Message</label>
+          <textarea class="form-control" id="surpriseContent" rows="4" oninput="renderSurpriseModule()">Why do programmers prefer dark mode? Because light attracts bugs!</textarea>
+        </div>
+      </div>
+    \`;
+  }
+
+  container.innerHTML = html;
+
+  if (id === 'pixel') {
+    initPixelCanvas();
+  }
+}
+
+/* =========================================================================
+   11. HELPER HANDLERS & PRESETS
+   ========================================================================= */
+function handleHotelLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    hotelLogoImg = img;
+    const settings = document.getElementById('logoSettingsRow');
+    if (settings) settings.style.display = 'grid';
+    renderBillModule();
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    photoSourceImg = img;
+    renderPhotoModule();
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function handleQRTypeChange() {
+  const type = document.getElementById('qrType').value;
+  const container = document.getElementById('qrDynamicFields');
+  if (type === 'wifi') {
+    container.innerHTML = \`
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Network Name (SSID)</label>
+          <input type="text" class="form-control" id="qrWifiSsid" value="Patil_Guest_WiFi" oninput="renderQRModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="text" class="form-control" id="qrWifiPass" value="vadapav123" oninput="renderQRModule()">
+        </div>
+      </div>
+    \`;
+  } else if (type === 'upi') {
+    container.innerHTML = \`
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">UPI ID</label>
+          <input type="text" class="form-control" id="qrUpiId" value="patilvadapav@okhdfcbank" oninput="renderQRModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Merchant Name</label>
+          <input type="text" class="form-control" id="qrUpiName" value="Patil Vadapav" oninput="renderQRModule()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount ₹ (Optional)</label>
+        <input type="number" class="form-control" id="qrUpiAmt" placeholder="Leave empty for open amount" oninput="renderQRModule()">
+      </div>
+    \`;
+  } else if (type === 'whatsapp') {
+    container.innerHTML = \`
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone Number with Country Code</label>
+          <input type="text" class="form-control" id="qrWaNum" value="+919876543210" oninput="renderQRModule()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pre-filled Message</label>
+          <input type="text" class="form-control" id="qrWaMsg" value="Hello! I would like to place an order." oninput="renderQRModule()">
+        </div>
+      </div>
+    \`;
+  } else {
+    container.innerHTML = \`
+      <div class="form-group">
+        <label class="form-label">Content or URL</label>
+        <input type="text" class="form-control" id="qrContent" value="https://ezoprint.com" oninput="renderQRModule()">
+      </div>
+    \`;
+  }
+  renderQRModule();
+}
+
+function applyStickerPreset(val) {
+  const t1 = document.getElementById('stickerText1');
+  const t2 = document.getElementById('stickerText2');
+  if (val === 'fragile') {
+    t1.value = 'FRAGILE';
+    t2.value = 'HANDLE WITH CARE • DO NOT DROP';
+  } else if (val === 'thankyou') {
+    t1.value = 'THANK YOU!';
+    t2.value = 'FOR SUPPORTING OUR SMALL BUSINESS';
+  } else if (val === 'homemade') {
+    t1.value = 'HOMEMADE';
+    t2.value = 'MADE WITH LOVE & FRESH INGREDIENTS';
+  } else if (val === 'batch') {
+    t1.value = 'BATCH: #A-902';
+    t2.value = 'MFG: TODAY • BEST BEFORE 3 DAYS';
+  }
+  renderStickerModule();
+}
+
+/* =========================================================================
+   12. PIXEL ART CANVAS DRAWING ENGINE
+   ========================================================================= */
+function initPixelCanvas() {
+  const pCan = document.getElementById('pixelCanvas');
+  if (!pCan) return;
+  const pCtx = pCan.getContext('2d');
+  const sz = activePixelGridSize;
+  const cellSize = pCan.width / sz;
+
+  function drawGrid() {
+    pCtx.clearRect(0, 0, pCan.width, pCan.height);
+    for (let r = 0; r < sz; r++) {
+      for (let c = 0; c < sz; c++) {
+        const idx = r * sz + c;
+        pCtx.fillStyle = pixelGrid[idx] === 1 ? '#000000' : '#ffffff';
+        pCtx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        pCtx.strokeStyle = '#e2e8f0';
+        pCtx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+
+  drawGrid();
+
+  let isDrawing = false;
+  function plot(e) {
+    const rect = pCan.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const c = Math.floor(x / cellSize);
+    const r = Math.floor(y / cellSize);
+    if (c >= 0 && c < sz && r >= 0 && r < sz) {
+      pixelGrid[r * sz + c] = pixelTool === 'pen' ? 1 : 0;
+      drawGrid();
+      renderPixelModule();
+    }
+  }
+
+  pCan.onmousedown = (e) => { isDrawing = true; plot(e); };
+  window.onmousemove = (e) => { if (isDrawing) plot(e); };
+  window.onmouseup = () => { isDrawing = false; };
+}
+
+function setPixelTool(tool) {
+  pixelTool = tool;
+}
+
+function clearPixelGrid() {
+  pixelGrid.fill(0);
+  initPixelCanvas();
+  renderPixelModule();
+}
+
+function changePixelGridSize(newSize) {
+  activePixelGridSize = newSize;
+  pixelGrid = Array(newSize * newSize).fill(0);
+  initPixelCanvas();
+  renderPixelModule();
+}
+
+/* =========================================================================
+   13. SURPRISES & QUOTES DATABASE
+   ========================================================================= */
+const SURPRISE_DATA = {
+  joke: [
+    'Why do programmers prefer dark mode?\\nBecause light attracts bugs!',
+    'There are 10 types of people in the world:\\nThose who understand binary, and those who do not.',
+    'Why was the thermal printer so calm?\\nBecause it never loses its cool paper roll!',
+    'A SQL query walks into a bar, walks up to two tables and asks: "Can I join you?"',
+    'Why did the developer go broke?\\nBecause he used up all his cache.'
+  ],
+  fact: [
+    'Did you know?\\nThermal paper prints using heat-activated dye layers, requiring zero ink cartridges!',
+    'Honey never spoils! Archaeologists have found 3,000-year-old honey in Egyptian tombs that is still edible.',
+    'A day on Venus is longer than a year on Venus! It takes 243 Earth days to rotate once.',
+    'Octopuses have three hearts, and their blood is blue due to copper-based hemocyanin!'
+  ],
+  riddle: [
+    'I speak without a mouth and hear without ears.\\nI have no body, but I come alive with wind.\\nWhat am I?\\nAnswer: An Echo.',
+    'The more of this there is, the less you see.\\nWhat is it?\\nAnswer: Darkness.',
+    'What has keys but cannot open locks?\\nAnswer: A Piano.'
+  ],
+  fortune: [
+    'Your hard work and persistence will soon blossom into extraordinary success.',
+    'A pleasant surprise is waiting for you around the corner today!',
+    'Trust your instincts; they are sharper than you think.'
+  ],
+  compliment: [
+    'You make a genuine difference in the lives of the people around you!',
+    'Your creativity and attention to detail are truly inspiring.',
+    'You are doing much better than you give yourself credit for!'
+  ]
+};
+
+function generateRandomSurprise() {
+  const cat = document.getElementById('surpriseCategory')?.value || 'joke';
+  const list = SURPRISE_DATA[cat] || SURPRISE_DATA.joke;
+  const picked = list[Math.floor(Math.random() * list.length)];
+  const box = document.getElementById('surpriseContent');
+  if (box) {
+    box.value = picked;
+    renderSurpriseModule();
+  }
+}
+
+const QUOTES_DATA = {
+  marathi: [
+    { text: 'स्वप्न मोठे ठेवा, मेहनत त्याहून मोठी करा.', author: '- सुविचार' },
+    { text: 'यशस्वी होण्यासाठी सर्वात मोठी गोष्ट म्हणजे सुरुवात करणे.', author: '- प्रेरणादायी' },
+    { text: 'कठीण काळातही शांत राहणे हीच खरी ताकद आहे.', author: '- विचार' }
+  ],
+  english: [
+    { text: 'The secret of getting ahead is getting started.', author: '- Mark Twain' },
+    { text: 'Simplicity is the ultimate sophistication.', author: '- Leonardo da Vinci' },
+    { text: 'Do small things with great love and care.', author: '- Mother Teresa' }
+  ],
+  hindi: [
+    { text: 'मेहनत इतनी खामोशी से करो कि सफलता शोर मचा दे।', author: '- प्रेरणा' },
+    { text: 'समय और समझ दोनों एक साथ खुशनसीब लोगों को ही मिलते हैं।', author: '- अनमोल वचन' }
+  ]
+};
+
+function loadRandomQuote(lang) {
+  const list = QUOTES_DATA[lang] || QUOTES_DATA.marathi;
+  const picked = list[Math.floor(Math.random() * list.length)];
+  document.getElementById('quoteText').value = picked.text;
+  document.getElementById('quoteAuthor').value = picked.author;
+  renderQuoteModule();
+}
+
+/* =========================================================================
+   14. DASHBOARD CARDS & FAVORITES
+   ========================================================================= */
+function renderDashboardCards() {
+  const grid = document.getElementById('allCardsGrid');
+  grid.innerHTML = MODULES.map(m => \`
+    <div class="feature-card" onclick="navigateTo('\${m.id}')">
+      <div class="card-header">
+        <div class="card-icon">\${m.icon}</div>
+        <div>
+          <h3>\${m.title}</h3>
+          <span class="card-tag">\${m.tag}</span>
+        </div>
+      </div>
+      <p>\${m.desc}</p>
+    </div>
+  \`).join('');
+
+  renderFavorites();
+}
+
+function renderFavorites() {
+  const section = document.getElementById('favoritesSection');
+  const grid = document.getElementById('favoritesGrid');
+  if (!favorites.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  const favMods = MODULES.filter(m => favorites.includes(m.id));
+  grid.innerHTML = favMods.map(m => \`
+    <div class="feature-card" onclick="navigateTo('\${m.id}')" style="border-color:var(--primary-glow);">
+      <div class="card-header">
+        <div class="card-icon">\${m.icon}</div>
+        <div>
+          <h3>\${m.title}</h3>
+          <span class="card-tag">\${m.tag}</span>
+        </div>
+      </div>
+      <p>\${m.desc}</p>
+    </div>
+  \`).join('');
+}
+
+function toggleFav(e, toolId) {
+  e.stopPropagation();
+  if (favorites.includes(toolId)) {
+    favorites = favorites.filter(x => x !== toolId);
+  } else {
+    favorites.push(toolId);
+  }
+  localStorage.setItem('ezo_favs', JSON.stringify(favorites));
+  updateFavStars();
+  renderFavorites();
+}
+
+function updateFavStars() {
+  document.querySelectorAll('#sidebarNavList .nav-item').forEach(el => {
+    const id = el.dataset.tool;
+    const star = el.querySelector('.fav-star');
+    if (star) {
+      star.classList.toggle('fav-active', favorites.includes(id));
+    }
+  });
+}
+
+function filterTools(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('#sidebarNavList .nav-item').forEach(el => {
+    if (el.dataset.tool === 'dashboard') return;
+    const txt = el.textContent.toLowerCase();
+    el.style.display = txt.includes(q) ? 'flex' : 'none';
+  });
+}
+
+function toggleTheme() {
+  const cur = document.body.getAttribute('data-theme');
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', nxt);
+  localStorage.setItem('ezo_theme', nxt);
+}
+
+function openHardwareModal() {
+  document.getElementById('hardwareModal').classList.add('open');
+}
+function closeHardwareModal() {
+  document.getElementById('hardwareModal').classList.remove('open');
+}
+
+// Initial theme load
+const savedTheme = localStorage.getItem('ezo_theme') || 'dark';
+document.body.setAttribute('data-theme', savedTheme);
+
+// Initialize app
+navigateTo('bill'); // Start directly on the Bill module as requested by user
+updateFavStars();
+</script>
+</body>
+</html>
+`;
+
+fs.writeFileSync(path.join(__dirname, 'index.html'), htmlContent, 'utf8');
+console.log('Successfully written index.html with all 14 modules and workstation features!');
+
