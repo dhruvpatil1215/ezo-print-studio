@@ -6,7 +6,10 @@ const htmlContent = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#101626">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Ezo Print Studio — Mini Printing Workstation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -718,34 +721,228 @@ textarea.form-control {
   color: var(--primary);
 }
 
+
+/* MOBILE NAVIGATION DRAWER & BOTTOM BAR */
+.mobile-nav-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.mobile-nav-toggle:hover {
+  background: var(--bg-input);
+}
+
+.mobile-quick-settings-btn {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+}
+
+/* Mobile Segmented Switcher for Module View (Editor vs Preview) */
+.mobile-pane-switcher {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin: 12px 14px 4px;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.pane-switch-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.pane-switch-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+/* Bottom Navigation Bar for Mobile */
+.mobile-bottom-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border);
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.25);
+}
+.bottom-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.15s;
+  flex: 1;
+  text-align: center;
+}
+.bottom-bar-item .b-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+.bottom-bar-item.active {
+  color: var(--primary);
+}
+
+/* RESPONSIVE BREAKPOINT FOR MOBILE & TABLETS */
 @media(max-width: 900px) {
-  .app-container {
-    flex-direction: column;
+  .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  aside.sidebar {
-    width: 100%;
-    max-height: 240px;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+  .mobile-quick-settings-btn {
+    display: inline-flex;
   }
-  aside.sidebar.collapsed {
+  .desktop-only-controls {
+    display: none !important;
+  }
+
+  /* Top Bar Mobile Optimization */
+  header.top-bar {
+    padding: 8px 12px;
+  }
+  .brand-text h1 {
+    font-size: 14px;
+  }
+  .brand-text p {
     display: none;
   }
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  /* Slide-Over Off-Canvas Sidebar */
+  aside.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 82vw;
+    z-index: 180;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  aside.sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop.mobile-open {
+    display: block;
+  }
+
+  /* Main container adjustments */
+  .app-container {
+    padding-bottom: 60px; /* Space for bottom nav bar */
+  }
+
+  /* Module View: Segmented Editor vs Preview */
   .view-module {
     flex-direction: column;
+  }
+  .mobile-pane-switcher {
+    display: grid;
   }
   .module-editor {
     max-width: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    padding: 14px;
+    display: block;
   }
   .module-preview-pane {
     min-width: 100%;
+    padding: 14px;
+    display: none;
   }
-  .mobile-view-tabs {
+
+  /* Active pane states on mobile */
+  .view-module[data-mobile-pane="preview"] .module-editor {
+    display: none !important;
+  }
+  .view-module[data-mobile-pane="preview"] .module-preview-pane {
+    display: flex !important;
+  }
+
+  /* Dashboard Grid */
+  .view-dashboard {
+    padding: 14px;
+  }
+  .hero-banner {
+    padding: 16px;
+  }
+  .hero-banner h2 {
+    font-size: 18px;
+  }
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Bottom Bar */
+  .mobile-bottom-bar {
     display: flex;
   }
+
+  /* Touch-friendly inputs & buttons */
+  .form-control, select.form-control, .btn {
+    min-height: 42px;
+    font-size: 14px;
+  }
+  input[type="range"] {
+    height: 36px;
+  }
+  .canvas-wrapper {
+    padding: 8px;
+    max-width: 100%;
+  }
+  canvas#globalPaper {
+    max-width: 100% !important;
+    height: auto !important;
+  }
 }
+
 
 /* PRINT CSS OPTIMIZED FOR 58mm / 80mm THERMAL ROLLS */
 @media print {
@@ -791,37 +988,57 @@ textarea.form-control {
 
 <!-- TOP HEADER -->
 <header class="top-bar">
-  <div class="brand" onclick="navigateTo('dashboard')">
-    <div class="brand-icon">E</div>
-    <div class="brand-text">
-      <h1>EZO PRINT STUDIO</h1>
-      <p>Mini Printing Workstation • 58D Thermal Engine</p>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button class="mobile-nav-toggle" onclick="toggleMobileSidebar()" title="Toggle Menu">☰</button>
+    <div class="brand" onclick="navigateTo('dashboard')">
+      <div class="brand-icon">E</div>
+      <div class="brand-text">
+        <h1>EZO PRINT STUDIO</h1>
+        <p>Mini Printing Workstation • 58D Thermal Engine</p>
+      </div>
     </div>
   </div>
 
   <div class="header-actions">
-    <div class="badge-status" id="printerStatusBtn" onclick="openHardwareModal()">
-      <span class="status-dot" id="printerStatusDot"></span>
-      <span id="printerStatusText">Printer: Ready (Browser)</span>
+    <!-- Quick Settings Button on Mobile -->
+    <button class="btn-icon mobile-quick-settings-btn" onclick="openHardwareModal()" title="Printer & Paper Settings">⚙️</button>
+
+    <div class="desktop-only-controls" style="display:flex; align-items:center; gap:8px;">
+      <div class="badge-status" id="printerStatusBtn" onclick="openHardwareModal()">
+        <span class="status-dot" id="printerStatusDot"></span>
+        <span id="printerStatusText">Printer: Ready (Browser)</span>
+      </div>
+
+      <!-- Paper width selector -->
+      <select class="form-control" id="globalPaperWidth" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()">
+        <option value="384" selected>58 mm Roll (384 px)</option>
+        <option value="576">80 mm Roll (576 px)</option>
+      </select>
+
+      <!-- Vertical Stretch for bold thermal double-height -->
+      <select class="form-control" id="globalStretch" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()" title="Vertical Stretch for thermal clarity">
+        <option value="1.0">Stretch: 1.0x (Normal)</option>
+        <option value="1.2" selected>Stretch: 1.2x (Tall/Clear)</option>
+        <option value="1.35">Stretch: 1.35x (Double Height)</option>
+      </select>
+
+      <!-- Global Text Size Multiplier -->
+      <select class="form-control" id="globalTextScale" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()" title="Global Text Size scaling for all tools">
+        <option value="0.85">Text: Compact (85%)</option>
+        <option value="1.0" selected>Text: Normal (100%)</option>
+        <option value="1.15">Text: Medium (115%)</option>
+        <option value="1.3">Text: Large (130%)</option>
+        <option value="1.5">Text: Extra Large (150%)</option>
+      </select>
     </div>
-
-    <!-- Paper width selector -->
-    <select class="form-control" id="globalPaperWidth" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()">
-      <option value="384" selected>58 mm Roll (384 px)</option>
-      <option value="576">80 mm Roll (576 px)</option>
-    </select>
-
-    <!-- Vertical Stretch for bold thermal double-height -->
-    <select class="form-control" id="globalStretch" style="width: auto; padding: 5px 8px; font-size: 12px;" onchange="onGlobalSettingsChange()" title="Vertical Stretch for thermal clarity">
-      <option value="1.0">Stretch: 1.0x (Normal)</option>
-      <option value="1.2" selected>Stretch: 1.2x (Tall/Clear)</option>
-      <option value="1.35">Stretch: 1.35x (Double Height)</option>
-    </select>
 
     <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
     <button class="btn-icon" onclick="openSavedDesignsModal()" title="Saved Designs">💾</button>
   </div>
 </header>
+
+<!-- Mobile Sidebar Backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
 
 <div class="app-container">
   <!-- SIDEBAR NAVIGATION -->
@@ -888,6 +1105,9 @@ textarea.form-control {
       <div class="nav-item" data-tool="surprise" onclick="navigateTo('surprise')">
         <span class="icon">🎁</span> <span>Random Surprise</span> <span class="fav-star" onclick="toggleFav(event, 'surprise')">★</span>
       </div>
+      <div class="nav-item" data-tool="arcade" onclick="navigateTo('arcade')">
+        <span class="icon">🎮</span> <span>Arcade & Game Studio</span> <span class="fav-star" onclick="toggleFav(event, 'arcade')">★</span>
+      </div>
     </nav>
   </aside>
 
@@ -920,7 +1140,16 @@ textarea.form-control {
     </div>
 
     <!-- MODULE WORKSPACE (DUAL PANE) -->
-    <div class="view-module" id="viewModule">
+    <div class="view-module" id="viewModule" data-mobile-pane="editor">
+      <!-- MOBILE PANE SWITCHER -->
+      <div class="mobile-pane-switcher">
+        <button class="pane-switch-btn active" id="mobileTabEditorBtn" onclick="switchMobilePane('editor')">
+          <span>📝</span> <span>Editor</span>
+        </button>
+        <button class="pane-switch-btn" id="mobileTabPreviewBtn" onclick="switchMobilePane('preview')">
+          <span>👁️</span> <span>Live Preview</span>
+        </button>
+      </div>
       <!-- LEFT: TOOL EDITOR -->
       <section class="module-editor" id="moduleEditorContainer">
         <!-- Form injected dynamically based on current module -->
@@ -1124,6 +1353,13 @@ const MODULES = [
     icon: '🎁',
     tag: 'Creative',
     desc: 'Instant entertaining jokes, fun science facts, riddles, fortune cookies, and compliments.'
+  },
+  {
+    id: 'arcade',
+    title: 'Arcade & Game Studio',
+    icon: '🎮',
+    tag: 'Games',
+    desc: 'Printable waiting-time paper games: Sudoku, Random Maze Labyrinth, Tic-Tac-Toe Tournament, Dots & Boxes, and Word Search.'
   }
 ];
 
@@ -1148,7 +1384,11 @@ const PrintEngine = {
   },
 
   getStretch() {
-    return parseFloat(document.getElementById('globalStretch').value) || 1.2;
+    return parseFloat(document.getElementById('globalStretch')?.value || '1.2');
+  },
+
+  getTextScale() {
+    return parseFloat(document.getElementById('globalTextScale')?.value || '1.0');
   },
 
   begin(maxEstimatedHeight = 3200) {
@@ -1402,7 +1642,7 @@ function renderBillModule() {
   ctx.textAlign = 'center';
   ctx.fillText(shopName, w / 2, scaledY);
   ctx.restore();
-  y += Math.round(26 * stretch);
+  y += Math.round((titleFontSize + 6) * stretch);
 
   // Address & Phone
   const addr = document.getElementById('billShopAddr')?.value?.trim();
@@ -1469,7 +1709,7 @@ function renderBillModule() {
     .map(l => l.trim())
     .filter(Boolean);
 
-  const rowLineH = Math.round(18 * stretch);
+  const rowLineH = Math.round((itemFontSize + 4) * stretch);
 
   for (const line of itemLines) {
     const parts = line.split(',').map(s => s.trim());
@@ -2168,6 +2408,753 @@ function renderSurpriseModule() {
   PrintEngine.finish(y);
 }
 
+
+/* =========================================================================
+   15. MODULE 15: ARCADE & GAME STUDIO
+   ========================================================================= */
+
+// Sudoku Seeds and randomized permutation engine
+const SUDOKU_BASE_EASY = [
+  [5,3,0,0,7,0,0,0,0],
+  [6,0,0,1,9,5,0,0,0],
+  [0,9,8,0,0,0,0,6,0],
+  [8,0,0,0,6,0,0,0,3],
+  [4,0,0,8,0,3,0,0,1],
+  [7,0,0,0,2,0,0,0,6],
+  [0,6,0,0,0,0,2,8,0],
+  [0,0,0,4,1,9,0,0,5],
+  [0,0,0,0,8,0,0,7,9]
+];
+
+const SUDOKU_SOL_EASY = [
+  [5,3,4,6,7,8,9,1,2],
+  [6,7,2,1,9,5,3,4,8],
+  [1,9,8,3,4,2,5,6,7],
+  [8,5,9,7,6,1,4,2,3],
+  [4,2,6,8,5,3,7,9,1],
+  [7,1,3,9,2,4,8,5,6],
+  [9,6,1,5,3,7,2,8,4],
+  [2,8,7,4,1,9,6,3,5],
+  [3,4,5,2,8,6,1,7,9]
+];
+
+let currentSudokuSeed = 0;
+let currentMazeSeed = 0;
+let currentWordSearchSeed = 0;
+
+function renderArcadeModule() {
+  const game = document.getElementById('arcadeGameType')?.value || 'sudoku';
+  if (game === 'sudoku') renderSudokuGame();
+  else if (game === 'maze') renderMazeGame();
+  else if (game === 'battleship') renderBattleshipGame();
+  else if (game === 'wordle') renderWordleGame();
+  else if (game === 'connect4') renderConnect4Game();
+  else if (game === 'tictactoe') renderTicTacToeGame();
+  else if (game === 'dots') renderDotsGame();
+  else if (game === 'wordsearch') renderWordSearchGame();
+}
+
+/* --- GAME 6: BATTLESHIP (SEA BATTLE DUEL) --- */
+function renderBattleshipGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const c1 = document.getElementById('bsCapt1')?.value || 'Captain 1';
+  const c2 = document.getElementById('bsCapt2')?.value || 'Captain 2';
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚓ BATTLESHIP DUEL ⚓', w / 2, y);
+  y += 22;
+
+  ctx.font = '700 11px monospace';
+  ctx.fillText(\`\${c1} VS \${c2}\`, w / 2, y);
+  y += 14;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // Draw 2 grids side-by-side or stacked: My Fleet (5x5) and Radar (5x5)
+  const gSize = 140;
+  const cellSize = gSize / 5;
+  const leftX = margin + Math.floor((maxW - gSize * 2) / 3);
+  const rightX = leftX + gSize + Math.floor((maxW - gSize * 2) / 3);
+
+  // Grid 1: My Fleet
+  ctx.font = '800 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('MY FLEET ⚓', leftX + gSize / 2, y);
+  ctx.fillText('RADAR 🎯', rightX + gSize / 2, y);
+  y += 16;
+
+  drawBattleshipGrid(ctx, leftX, y, gSize);
+  drawBattleshipGrid(ctx, rightX, y, gSize);
+  y += gSize + 16;
+
+  // Fleet legend
+  ctx.strokeRect(margin, y, maxW, 44);
+  ctx.font = '700 11px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('SHIPS TO DRAW (IN MY FLEET):', margin + 10, y + 12);
+  ctx.font = '600 10px monospace';
+  ctx.fillText('Carrier: [■■■] (3 cells)   Patrol: [■■] (2 cells)', margin + 10, y + 28);
+  y += 56;
+
+  ctx.font = '600 10px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Call coords (e.g. B3). Mark "X" for Hit and "O" for Miss!', w / 2, y);
+  y += 16;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+function drawBattleshipGrid(ctx, x, y, size) {
+  const step = size / 5;
+  const cols = ['A', 'B', 'C', 'D', 'E'];
+  const rows = ['1', '2', '3', '4', '5'];
+
+  // Draw cells
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 1;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      ctx.strokeRect(x + c * step, y + r * step, step, step);
+    }
+  }
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, size, size);
+}
+
+/* --- GAME 7: WORDLE PAPER CHALLENGE --- */
+const WORDLE_WORDS = ['CHIPS', 'TOAST', 'BREAD', 'GRAVY', 'ONION', 'PIZZA', 'DRINK', 'LEMON', 'SNACK'];
+let currentWordleIndex = 0;
+
+function renderWordleGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const clue = document.getElementById('wordleClue')?.value || 'Popular Street Food';
+  const showAns = document.getElementById('wordleShowAns')?.checked || false;
+  const targetWord = WORDLE_WORDS[currentWordleIndex % WORDLE_WORDS.length];
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🔠 WORDLE CHALLENGE 🔠', w / 2, y);
+  y += 22;
+
+  ctx.font = '700 11px monospace';
+  ctx.fillText('CLUE: ' + clue.toUpperCase(), w / 2, y);
+  y += 14;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // 6 rows of 5 square letter boxes
+  const boxSize = 34;
+  const gap = 6;
+  const rowW = 5 * boxSize + 4 * gap;
+  const startX = Math.round((w - rowW) / 2);
+
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 5; c++) {
+      const bX = startX + c * (boxSize + gap);
+      const bY = y + r * (boxSize + gap);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#000000';
+      ctx.strokeRect(bX, bY, boxSize, boxSize);
+    }
+  }
+
+  y += 6 * (boxSize + gap) + 14;
+
+  // Alphabet Keyboard Tracker
+  ctx.font = '800 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('KEYBOARD TRACKER (CROSS OFF USED LETTERS):', w / 2, y);
+  y += 14;
+
+  const kRow1 = 'Q W E R T Y U I O P';
+  const kRow2 = 'A S D F G H J K L';
+  const kRow3 = 'Z X C V B N M';
+
+  ctx.font = '700 11px monospace';
+  ctx.fillText(kRow1, w / 2, y); y += 14;
+  ctx.fillText(kRow2, w / 2, y); y += 14;
+  ctx.fillText(kRow3, w / 2, y); y += 20;
+
+  if (showAns) {
+    PrintEngine.drawDashedLine(ctx, y, margin, w - margin, [4, 4]);
+    y += 14;
+    ctx.font = '600 10px monospace';
+    ctx.fillText('INVERTED SOLUTION (ROTATE 180° TO READ):', w / 2, y);
+    y += 18;
+    ctx.save();
+    ctx.translate(w / 2, y);
+    ctx.rotate(Math.PI);
+    ctx.font = '800 16px monospace';
+    ctx.fillText(targetWord, 0, 0);
+    ctx.restore();
+    y += 16;
+  }
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+function nextWordleSeed() {
+  currentWordleIndex++;
+  renderArcadeModule();
+}
+
+/* --- GAME 8: CONNECT 4 (FOUR-IN-A-ROW) --- */
+function renderConnect4Game() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const p1 = document.getElementById('c4P1')?.value || 'Player 1';
+  const p2 = document.getElementById('c4P2')?.value || 'Player 2';
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🔴 FOUR-IN-A-ROW 🔴', w / 2, y);
+  y += 22;
+
+  ctx.font = '700 11px monospace';
+  ctx.fillText(\`\${p1} (● Solid) VS \${p2} (✕ Cross)\`, w / 2, y);
+  y += 14;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 18;
+
+  // 6 rows x 7 cols circle grid
+  const cols = 7;
+  const rows = 6;
+  const spacing = Math.floor((maxW - 20) / (cols - 1));
+  const radius = Math.floor(spacing * 0.42);
+  const startX = Math.round((w - (cols - 1) * spacing) / 2);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cX = startX + c * spacing;
+      const cY = y + r * spacing;
+      ctx.beginPath();
+      ctx.arc(cX, cY, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#000000';
+      ctx.stroke();
+    }
+  }
+
+  y += (rows - 1) * spacing + radius + 20;
+
+  // Win tally
+  ctx.strokeRect(margin, y, maxW, 36);
+  ctx.font = '700 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('Drop discs from bottom up. First to 4-in-a-row wins!', w / 2, y + 22);
+  y += 48;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- GAME 1: SUDOKU GENERATOR --- */
+function renderSudokuGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const mode = document.getElementById('sudokuMode')?.value || '9x9';
+  const showSol = document.getElementById('sudokuShowSol')?.checked || false;
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🧩 SUDOKU PUZZLE 🧩', w / 2, y);
+  y += 22;
+
+  ctx.font = '600 11px monospace';
+  ctx.fillText('DIFFICULTY: ' + (mode === '4x4' ? 'KIDS MINI (4x4)' : 'CLASSIC 9x9'), w / 2, y);
+  y += 16;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  if (mode === '4x4') {
+    // 4x4 Mini Sudoku
+    const sz = 4;
+    const cellSize = Math.floor((maxW - 40) / sz);
+    const startX = Math.round((w - sz * cellSize) / 2);
+    const miniPuzzle = [
+      [1, 0, 0, 4],
+      [0, 2, 3, 0],
+      [0, 3, 1, 0],
+      [4, 0, 0, 2]
+    ];
+
+    for (let r = 0; r < sz; r++) {
+      for (let c = 0; c < sz; c++) {
+        const cX = startX + c * cellSize;
+        const cY = y + r * cellSize;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = (r % 2 === 0 && r > 0 ? 3 : 1);
+        ctx.strokeRect(cX, cY, cellSize, cellSize);
+
+        const val = miniPuzzle[r][c];
+        if (val > 0) {
+          ctx.font = '800 22px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(val), cX + cellSize / 2, cY + 12);
+        }
+      }
+    }
+    // Outer border
+    ctx.lineWidth = 3;
+    ctx.strokeRect(startX, y, sz * cellSize, sz * cellSize);
+    y += sz * cellSize + 20;
+
+  } else {
+    // 9x9 Standard Sudoku
+    const sz = 9;
+    const cellSize = Math.floor((maxW - 10) / sz); // ~36px
+    const startX = Math.round((w - sz * cellSize) / 2);
+
+    // Permute numbers based on seed for variety
+    const perm = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    if (currentSudokuSeed > 0) {
+      // Rotate digits
+      const s = currentSudokuSeed % 8 + 1;
+      for (let i = 1; i <= 9; i++) perm[i] = ((i + s - 1) % 9) + 1;
+    }
+
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const cX = startX + c * cellSize;
+        const cY = y + r * cellSize;
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cX, cY, cellSize, cellSize);
+
+        const baseVal = SUDOKU_BASE_EASY[r][c];
+        const val = baseVal > 0 ? perm[baseVal] : 0;
+        if (val > 0) {
+          ctx.font = '800 17px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(val), cX + cellSize / 2, cY + 8);
+        }
+      }
+    }
+
+    // Thick 3x3 block borders
+    ctx.lineWidth = 3;
+    for (let i = 0; i <= 3; i++) {
+      // Horizontal
+      ctx.beginPath();
+      ctx.moveTo(startX, y + i * 3 * cellSize);
+      ctx.lineTo(startX + 9 * cellSize, y + i * 3 * cellSize);
+      ctx.stroke();
+
+      // Vertical
+      ctx.beginPath();
+      ctx.moveTo(startX + i * 3 * cellSize, y);
+      ctx.lineTo(startX + i * 3 * cellSize, y + 9 * cellSize);
+      ctx.stroke();
+    }
+
+    y += 9 * cellSize + 20;
+  }
+
+  ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Rules: Fill every row, column and box with 1 to ' + (mode === '4x4' ? '4' : '9') + '.', w / 2, y);
+  y += 18;
+
+  if (showSol && mode === '9x9') {
+    PrintEngine.drawDashedLine(ctx, y, margin, w - margin, [4, 4]);
+    y += 14;
+    ctx.font = '700 10px monospace';
+    ctx.fillText('✂ TEAR-OFF ANSWER KEY (SUDOKU SOLUTION) ✂', w / 2, y);
+    y += 16;
+
+    // Mini solution grid
+    const solCell = 14;
+    const solX = Math.round((w - 9 * solCell) / 2);
+    ctx.font = '600 9px monospace';
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const val = SUDOKU_SOL_EASY[r][c];
+        ctx.fillText(String(val), solX + c * solCell + solCell / 2, y + r * solCell);
+      }
+    }
+    y += 9 * solCell + 12;
+  }
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 14);
+}
+
+/* --- GAME 2: RANDOM MAZE GENERATOR (Labyrinth) --- */
+function renderMazeGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const cols = 15;
+  const rows = 17;
+  const cellSize = Math.floor(maxW / cols); // ~23px
+  const startX = Math.round((w - cols * cellSize) / 2);
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🌀 MAZE RUNNER 🌀', w / 2, y);
+  y += 22;
+
+  ctx.font = '700 12px monospace';
+  ctx.fillText('FIND YOUR WAY TO THE GOAL!', w / 2, y);
+  y += 16;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 18;
+
+  // Generate Maze using Depth-First Search with seed
+  const grid = [];
+  for (let r = 0; r < rows; r++) {
+    grid[r] = [];
+    for (let c = 0; c < cols; c++) {
+      grid[r][c] = { visited: false, top: true, right: true, bottom: true, left: true };
+    }
+  }
+
+  // Pseudo-random based on currentMazeSeed
+  let seedVal = currentMazeSeed * 9301 + 49297;
+  function rnd() {
+    seedVal = (seedVal * 9301 + 49297) % 233280;
+    return seedVal / 233280;
+  }
+
+  const stack = [];
+  let current = { r: 0, c: 0 };
+  grid[0][0].visited = true;
+
+  while (true) {
+    const neighbors = [];
+    const { r, c } = current;
+    if (r > 0 && !grid[r - 1][c].visited) neighbors.push({ r: r - 1, c, dir: 'top', opp: 'bottom' });
+    if (r < rows - 1 && !grid[r + 1][c].visited) neighbors.push({ r: r + 1, c, dir: 'bottom', opp: 'top' });
+    if (c > 0 && !grid[r][c - 1].visited) neighbors.push({ r, c: c - 1, dir: 'left', opp: 'right' });
+    if (c < cols - 1 && !grid[r][c + 1].visited) neighbors.push({ r, c: c + 1, dir: 'right', opp: 'left' });
+
+    if (neighbors.length > 0) {
+      const next = neighbors[Math.floor(rnd() * neighbors.length)];
+      grid[r][c][next.dir] = false;
+      grid[next.r][next.c][next.opp] = false;
+      grid[next.r][next.c].visited = true;
+      stack.push(current);
+      current = { r: next.r, c: next.c };
+    } else if (stack.length > 0) {
+      current = stack.pop();
+    } else {
+      break;
+    }
+  }
+
+  // Open start and exit
+  grid[0][0].top = false;
+  grid[rows - 1][cols - 1].bottom = false;
+
+  // Draw maze walls
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2;
+
+  // Entrance indicator
+  ctx.font = '800 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('▼ START', startX + cellSize / 2, y - 6);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x1 = startX + c * cellSize;
+      const y1 = y + r * cellSize;
+      const x2 = x1 + cellSize;
+      const y2 = y1 + cellSize;
+      const cell = grid[r][c];
+
+      if (cell.top) {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y1); ctx.stroke();
+      }
+      if (cell.right) {
+        ctx.beginPath(); ctx.moveTo(x2, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      if (cell.bottom) {
+        ctx.beginPath(); ctx.moveTo(x1, y2); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      if (cell.left) {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1, y2); ctx.stroke();
+      }
+    }
+  }
+
+  y += rows * cellSize + 10;
+  // Exit indicator
+  ctx.fillText('▲ GOAL 🏆', startX + (cols - 1) * cellSize + cellSize / 2, y + 6);
+  y += 24;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- GAME 3: TIC-TAC-TOE TOURNAMENT --- */
+function renderTicTacToeGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const p1 = document.getElementById('tttPlayer1')?.value || 'Player 1';
+  const p2 = document.getElementById('tttPlayer2')?.value || 'Player 2';
+  const rounds = parseInt(document.getElementById('tttRounds')?.value || '6', 10);
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚔️ TIC-TAC-TOE SHOWDOWN ⚔️', w / 2, y);
+  y += 22;
+
+  // Player scoreboard
+  ctx.strokeRect(margin, y, maxW, 36);
+  ctx.font = '700 12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('X: ' + p1, margin + 12, y + 12);
+  ctx.textAlign = 'right';
+  ctx.fillText('O: ' + p2, w - margin - 12, y + 12);
+  y += 46;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // Print grids in pairs (2 columns)
+  const gridW = 120;
+  const colSpacing = maxW - gridW * 2;
+  const leftX = margin + Math.floor(colSpacing / 3);
+  const rightX = leftX + gridW + Math.floor(colSpacing / 3);
+
+  for (let r = 0; r < rounds; r += 2) {
+    const round1 = r + 1;
+    const round2 = r + 2 <= rounds ? r + 2 : null;
+
+    // Draw round 1 grid
+    ctx.font = '800 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ROUND #' + round1, leftX + gridW / 2, y);
+    drawSingleTicTacToe(ctx, leftX, y + 14, gridW);
+
+    if (round2) {
+      ctx.fillText('ROUND #' + round2, rightX + gridW / 2, y);
+      drawSingleTicTacToe(ctx, rightX, y + 14, gridW);
+    }
+
+    y += gridW + 36;
+    if (r + 2 < rounds) {
+      PrintEngine.drawDashedLine(ctx, y - 8, margin, w - margin, [2, 2]);
+    }
+  }
+
+  // Champion Box
+  ctx.strokeRect(margin + 20, y, maxW - 40, 32);
+  ctx.font = '800 13px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('👑 TOURNAMENT CHAMPION: ____________', w / 2, y + 10);
+  y += 46;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+function drawSingleTicTacToe(ctx, x, y, size) {
+  const step = size / 3;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000000';
+
+  // Vertical lines
+  ctx.beginPath();
+  ctx.moveTo(x + step, y); ctx.lineTo(x + step, y + size);
+  ctx.moveTo(x + step * 2, y); ctx.lineTo(x + step * 2, y + size);
+  ctx.stroke();
+
+  // Horizontal lines
+  ctx.beginPath();
+  ctx.moveTo(x, y + step); ctx.lineTo(x + size, y + step);
+  ctx.moveTo(x, y + step * 2); ctx.lineTo(x + size, y + step * 2);
+  ctx.stroke();
+}
+
+/* --- GAME 4: DOTS & BOXES CHALLENGE --- */
+function renderDotsGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const sz = parseInt(document.getElementById('dotsGridSize')?.value || '5', 10); // 4x4 or 5x5 or 6x6
+  const p1 = document.getElementById('dotsP1')?.value || 'P1';
+  const p2 = document.getElementById('dotsP2')?.value || 'P2';
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 DOTS & BOXES 🎯', w / 2, y);
+  y += 22;
+
+  ctx.font = '600 11px monospace';
+  ctx.fillText('CONNECT DOTS • CLAIM BOXES', w / 2, y);
+  y += 16;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // Draw Dots Grid
+  const dotSpacing = Math.floor((maxW - 30) / (sz - 1));
+  const startX = Math.round((w - (sz - 1) * dotSpacing) / 2);
+
+  for (let r = 0; r < sz; r++) {
+    for (let c = 0; c < sz; c++) {
+      const dX = startX + c * dotSpacing;
+      const dY = y + r * dotSpacing;
+      ctx.beginPath();
+      ctx.arc(dX, dY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+    }
+  }
+
+  y += (sz - 1) * dotSpacing + 24;
+
+  // Score Box
+  ctx.strokeRect(margin, y, maxW, 40);
+  ctx.font = '700 12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(p1 + ' Boxes: [    ]', margin + 14, y + 14);
+  ctx.textAlign = 'right';
+  ctx.fillText(p2 + ' Boxes: [    ]', w - margin - 14, y + 14);
+  y += 50;
+
+  ctx.font = '600 10px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Take turns drawing 1 line. Close a box to write your initial!', w / 2, y);
+  y += 16;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
+/* --- GAME 5: WORD SEARCH PUZZLE --- */
+function renderWordSearchGame() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const theme = document.getElementById('wsTheme')?.value || 'food';
+  const customWordsRaw = document.getElementById('wsCustomWords')?.value || '';
+
+  let wordList = ['VADAPAV', 'SAMOSA', 'CHAI', 'MISAL', 'POHA', 'DOSA'];
+  if (theme === 'cities') {
+    wordList = ['MUMBAI', 'PUNE', 'DELHI', 'NAGPUR', 'GOA', 'SURAT'];
+  } else if (theme === 'custom' && customWordsRaw.trim()) {
+    wordList = customWordsRaw.split(',').map(s => s.trim().toUpperCase().replace(/[^A-Z]/g, '')).filter(Boolean);
+  }
+
+  let y = 14;
+  ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🔍 WORD SEARCH 🔍', w / 2, y);
+  y += 22;
+
+  ctx.font = '700 12px monospace';
+  ctx.fillText('THEME: ' + (theme === 'food' ? 'MAHARASHTRA FAST FOOD' : theme === 'cities' ? 'INDIAN CITIES' : 'CUSTOM WORDS'), w / 2, y);
+  y += 16;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  // 10x10 Word Search Grid
+  const sz = 10;
+  const cellSize = Math.floor((maxW - 10) / sz); // ~34px
+  const startX = Math.round((w - sz * cellSize) / 2);
+
+  const grid = Array(sz).fill(null).map(() => Array(sz).fill(''));
+
+  // Place words horizontally or vertically
+  let seed = currentWordSearchSeed * 1337 + 7919;
+  function rnd() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  }
+
+  for (const word of wordList.slice(0, 6)) {
+    let placed = false;
+    let attempts = 0;
+    while (!placed && attempts < 80) {
+      attempts++;
+      const dir = rnd() > 0.5 ? 'H' : 'V';
+      if (dir === 'H') {
+        const r = Math.floor(rnd() * sz);
+        const c = Math.floor(rnd() * (sz - word.length + 1));
+        let ok = true;
+        for (let i = 0; i < word.length; i++) {
+          if (grid[r][c + i] && grid[r][c + i] !== word[i]) { ok = false; break; }
+        }
+        if (ok) {
+          for (let i = 0; i < word.length; i++) grid[r][c + i] = word[i];
+          placed = true;
+        }
+      } else {
+        const r = Math.floor(rnd() * (sz - word.length + 1));
+        const c = Math.floor(rnd() * sz);
+        let ok = true;
+        for (let i = 0; i < word.length; i++) {
+          if (grid[r + i][c] && grid[r + i][c] !== word[i]) { ok = false; break; }
+        }
+        if (ok) {
+          for (let i = 0; i < word.length; i++) grid[r + i][c] = word[i];
+          placed = true;
+        }
+      }
+    }
+  }
+
+  // Fill remaining empty cells with random letters
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let r = 0; r < sz; r++) {
+    for (let c = 0; c < sz; c++) {
+      if (!grid[r][c]) {
+        grid[r][c] = letters[Math.floor(rnd() * letters.length)];
+      }
+    }
+  }
+
+  // Draw Letter Grid
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.font = '700 16px monospace';
+  ctx.textAlign = 'center';
+
+  for (let r = 0; r < sz; r++) {
+    for (let c = 0; c < sz; c++) {
+      const cX = startX + c * cellSize;
+      const cY = y + r * cellSize;
+      ctx.strokeRect(cX, cY, cellSize, cellSize);
+      ctx.fillStyle = '#000000';
+      ctx.fillText(grid[r][c], cX + cellSize / 2, cY + 9);
+    }
+  }
+
+  // Outer thick border
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000000';
+  ctx.strokeRect(startX, y, sz * cellSize, sz * cellSize);
+
+  y += sz * cellSize + 16;
+
+  // Word Bank with [ ] Checkboxes
+  ctx.font = '800 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('WORDS TO FIND:', w / 2, y);
+  y += 18;
+
+  ctx.font = '700 12px monospace';
+  // Print in 2 columns
+  for (let i = 0; i < wordList.length; i += 2) {
+    const w1 = '[ ] ' + wordList[i];
+    const w2 = wordList[i + 1] ? '[ ] ' + wordList[i + 1] : '';
+    ctx.textAlign = 'left';
+    ctx.fillText(w1, margin + 20, y);
+    if (w2) {
+      ctx.fillText(w2, w / 2 + 10, y);
+    }
+    y += 16;
+  }
+
+  y += 8;
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  PrintEngine.finish(y + 12);
+}
+
 /* =========================================================================
    6. EXPORT MANAGER (PRINT, PNG, ESC/POS)
    ========================================================================= */
@@ -2363,6 +3350,7 @@ function renderCurrentTool() {
     case 'pixel': renderPixelModule(); break;
     case 'quote': renderQuoteModule(); break;
     case 'surprise': renderSurpriseModule(); break;
+    case 'arcade': renderArcadeModule(); break;
   }
   const elapsed = Math.round(performance.now() - start);
   const statusEl = document.getElementById('renderTimeStatus');
@@ -2410,6 +3398,16 @@ function renderModuleEditor(id) {
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Item Text Size: <strong id="billFontSizeLabel">14px</strong></label>
+            <input type="range" class="form-control" id="billFontSize" min="11" max="24" value="14" oninput="document.getElementById('billFontSizeLabel').textContent=this.value+'px'; renderBillModule();">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shop Title Size: <strong id="billTitleSizeLabel">20px</strong></label>
+            <input type="range" class="form-control" id="billTitleSize" min="14" max="32" value="20" oninput="document.getElementById('billTitleSizeLabel').textContent=this.value+'px'; renderBillModule();">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Address (optional)</label>
             <input type="text" class="form-control" id="billShopAddr" placeholder="e.g. Station Road, Near City Mall" oninput="renderBillModule()">
           </div>
@@ -2436,13 +3434,26 @@ function renderModuleEditor(id) {
       </div>
 
       <div class="editor-card">
+        <div class="editor-card-title">
+          <span>⚡ Touch POS Quick Menu (Tap to Add)</span>
+          <button class="btn sm" onclick="clearBillItems()" style="padding:3px 8px; font-size:11px;">Clear All</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; margin-bottom:12px;">
+          <button class="btn sm" onclick="quickAddBillItem('Special Vadapav', 20)">➕ Vadapav ₹20</button>
+          <button class="btn sm" onclick="quickAddBillItem('Butter Vadapav', 30)">➕ Butter VP ₹30</button>
+          <button class="btn sm" onclick="quickAddBillItem('Samosa Plate', 25)">➕ Samosa ₹25</button>
+          <button class="btn sm" onclick="quickAddBillItem('Masala Chai', 10)">➕ Chai ₹10</button>
+          <button class="btn sm" onclick="quickAddBillItem('Misal Pav', 40)">➕ Misal Pav ₹40</button>
+          <button class="btn sm" onclick="quickAddBillItem('Cold Drink', 20)">➕ Cold Drink ₹20</button>
+        </div>
+
         <div class="editor-card-title">🛒 Bill Items (Format: Name, Qty, Rate)</div>
         <div class="form-group">
           <textarea class="form-control" id="billItems" rows="4" oninput="renderBillModule()">Special Vadapav, 3, 20
 Amul Butter Vadapav, 2, 30
 Masala Chai, 3, 10
 Cold Drink, 1, 20</textarea>
-          <span class="form-hint">Item names are automatically bolded and formatted to wrap properly without overlapping prices.</span>
+          <span class="form-hint">Tap any button above to add or increment items, or edit the text directly.</span>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -2475,6 +3486,23 @@ Cold Drink, 1, 20</textarea>
           <span class="form-hint">Supports Marathi / Devanagari text ("पुन्हा या!").</span>
         </div>
       </div>
+
+      <div class="editor-card">
+        <div class="editor-card-title">📲 Digital WhatsApp Bill & Daily Sales Report</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Customer WhatsApp Number</label>
+            <input type="text" class="form-control" id="billCustPhone" placeholder="+919876543210">
+          </div>
+          <div class="form-group" style="display:flex; align-items:flex-end;">
+            <button class="btn sm accent" style="width:100%; min-height:42px;" onclick="shareBillOnWhatsApp()">📲 Send on WhatsApp</button>
+          </div>
+        </div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; gap:8px;">
+          <button class="btn sm primary" style="flex:1;" onclick="renderZReport()">📊 Print Daily Z-Report</button>
+          <button class="btn sm" style="flex:1;" onclick="renderLoyaltyCard()">☕ Print Loyalty Card</button>
+        </div>
+      </div>
     \`;
   } else if (id === 'text') {
     html += \`
@@ -2498,12 +3526,8 @@ This is my eZo 58D thermal test print.
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Font Size</label>
-            <select class="form-control" id="textSize" onchange="renderTextModule()">
-              <option value="14">Small (14px)</option>
-              <option value="17" selected>Normal (17px)</option>
-              <option value="22">Large (22px)</option>
-            </select>
+            <label class="form-label">Font Size: <strong id="textSizeDisplay">17px</strong></label>
+            <input type="range" class="form-control" id="textSize" min="10" max="38" value="17" oninput="document.getElementById('textSizeDisplay').textContent=this.value+'px'; renderTextModule();">
           </div>
         </div>
       </div>
@@ -2822,6 +3846,165 @@ Every action has an equal and opposite reaction.</textarea>
         </div>
       </div>
     \`;
+  } else if (id === 'arcade') {
+    html += \`
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label">Choose Paper Game</label>
+          <select class="form-control" id="arcadeGameType" onchange="handleArcadeGameChange()">
+            <option value="sudoku" selected>🧩 Sudoku (Classic 9x9 / Kids 4x4)</option>
+            <option value="maze">🌀 Maze Runner (Random Labyrinth)</option>
+            <option value="battleship">🚢 Battleship (Sea Battle Duel)</option>
+            <option value="wordle">🔠 Wordle Paper Challenge</option>
+            <option value="connect4">🔴 Connect 4 (Four-in-a-Row)</option>
+            <option value="tictactoe">⚔️ Tic-Tac-Toe Showdown Tournament</option>
+            <option value="dots">🎯 Dots & Boxes Challenge</option>
+            <option value="wordsearch">🔍 Word Search Puzzle (Food / Cities / Custom)</option>
+          </select>
+        </div>
+
+        <!-- SUDOKU CONTROLS -->
+        <div id="arcadeSubSudoku">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sudoku Grid Size</label>
+              <select class="form-control" id="sudokuMode" onchange="renderArcadeModule()">
+                <option value="9x9" selected>Classic 9×9 Puzzle</option>
+                <option value="4x4">Kids Mini 4×4 Puzzle</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-check" style="margin-top:24px;">
+                <input type="checkbox" id="sudokuShowSol" onchange="renderArcadeModule()"> Include Tear-off Solution
+              </label>
+            </div>
+          </div>
+          <button class="btn sm primary" style="width:100%; margin-top:8px;" onclick="currentSudokuSeed++; renderArcadeModule();">🎲 Generate New Sudoku Puzzle</button>
+        </div>
+
+        <!-- MAZE CONTROLS -->
+        <div id="arcadeSubMaze" style="display:none;">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+            Generates an algorithmic labyrinth from Entrance to Exit. Perfect for kids or friends to trace with a pen.
+          </p>
+          <button class="btn sm primary" style="width:100%;" onclick="currentMazeSeed++; renderArcadeModule();">🎲 Generate New Random Maze</button>
+        </div>
+
+        <!-- TIC TAC TOE CONTROLS -->
+        <div id="arcadeSubTtt" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Player 1 (X)</label>
+              <input type="text" class="form-control" id="tttPlayer1" value="Player 1" oninput="renderArcadeModule()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Player 2 (O)</label>
+              <input type="text" class="form-control" id="tttPlayer2" value="Player 2" oninput="renderArcadeModule()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Rounds</label>
+            <select class="form-control" id="tttRounds" onchange="renderArcadeModule()">
+              <option value="4">4 Rounds</option>
+              <option value="6" selected>6 Rounds</option>
+              <option value="8">8 Rounds</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DOTS & BOXES CONTROLS -->
+        <div id="arcadeSubDots" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Grid Size</label>
+              <select class="form-control" id="dotsGridSize" onchange="renderArcadeModule()">
+                <option value="4">4 × 4 Dots</option>
+                <option value="5" selected>5 × 5 Dots</option>
+                <option value="6">6 × 6 Dots</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Player 1 & 2</label>
+              <div style="display:flex; gap:6px;">
+                <input type="text" class="form-control" id="dotsP1" value="P1" oninput="renderArcadeModule()">
+                <input type="text" class="form-control" id="dotsP2" value="P2" oninput="renderArcadeModule()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WORD SEARCH CONTROLS -->
+        <div id="arcadeSubWordSearch" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Theme</label>
+            <select class="form-control" id="wsTheme" onchange="handleWordSearchThemeChange()">
+              <option value="food" selected>Food & Snacks (Vadapav, Samosa, Chai...)</option>
+              <option value="cities">Indian Cities (Mumbai, Pune, Delhi...)</option>
+              <option value="custom">Custom Words (Type your own)</option>
+            </select>
+          </div>
+          <div class="form-group" id="wsCustomGroup" style="display:none;">
+            <label class="form-label">Custom Words (Comma separated)</label>
+            <input type="text" class="form-control" id="wsCustomWords" value="BURGER, PIZZA, FRIES, SHAKE, TACO" oninput="renderArcadeModule()">
+          </div>
+          <button class="btn sm primary" style="width:100%; margin-top:8px;" onclick="currentWordSearchSeed++; renderArcadeModule();">🎲 Shuffle Word Search Grid</button>
+        </div>
+
+        <!-- BATTLESHIP CONTROLS -->
+        <div id="arcadeSubBattleship" style="display:none;">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+            Prints two 5×5 grids: "My Fleet" (place your 3 ships) and "Radar" (mark hits X and misses O). Perfect 2-player naval battle.
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Captain 1</label>
+              <input type="text" class="form-control" id="bsCapt1" value="Captain 1" oninput="renderArcadeModule()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Captain 2</label>
+              <input type="text" class="form-control" id="bsCapt2" value="Captain 2" oninput="renderArcadeModule()">
+            </div>
+          </div>
+        </div>
+
+        <!-- WORDLE CONTROLS -->
+        <div id="arcadeSubWordle" style="display:none;">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+            6 attempts to guess the 5-letter mystery word with letter boxes and an alphabet cross-off keyboard tracker.
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Word Category / Clue</label>
+              <input type="text" class="form-control" id="wordleClue" value="Popular Street Food" oninput="renderArcadeModule()">
+            </div>
+            <div class="form-group">
+              <label class="form-check" style="margin-top:24px;">
+                <input type="checkbox" id="wordleShowAns" onchange="renderArcadeModule()"> Include Inverted Answer
+              </label>
+            </div>
+          </div>
+          <button class="btn sm primary" style="width:100%; margin-top:6px;" onclick="nextWordleSeed();">🎲 New Daily Wordle Word</button>
+        </div>
+
+        <!-- CONNECT 4 CONTROLS -->
+        <div id="arcadeSubConnect4" style="display:none;">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+            6×7 gravity drop circle grid. Take turns coloring circles from the bottom up to get 4 in a row.
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Player 1 (Solid ●)</label>
+              <input type="text" class="form-control" id="c4P1" value="Player 1" oninput="renderArcadeModule()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Player 2 (Crossed ✕)</label>
+              <input type="text" class="form-control" id="c4P2" value="Player 2" oninput="renderArcadeModule()">
+            </div>
+          </div>
+        </div>
+      </div>
+    \`;
+  
   } else if (id === 'surprise') {
     html += \`
       <div class="editor-card">
@@ -2854,6 +4037,230 @@ Every action has an equal and opposite reaction.</textarea>
 /* =========================================================================
    11. HELPER HANDLERS & PRESETS
    ========================================================================= */
+
+function handleArcadeGameChange() {
+  const g = document.getElementById('arcadeGameType').value;
+  ['Sudoku', 'Maze', 'Battleship', 'Wordle', 'Connect4', 'Ttt', 'Dots', 'WordSearch'].forEach(k => {
+    const el = document.getElementById('arcadeSub' + k);
+    if (el) el.style.display = 'none';
+  });
+  if (g === 'sudoku') document.getElementById('arcadeSubSudoku').style.display = 'block';
+  else if (g === 'maze') document.getElementById('arcadeSubMaze').style.display = 'block';
+  else if (g === 'battleship') document.getElementById('arcadeSubBattleship').style.display = 'block';
+  else if (g === 'wordle') document.getElementById('arcadeSubWordle').style.display = 'block';
+  else if (g === 'connect4') document.getElementById('arcadeSubConnect4').style.display = 'block';
+  else if (g === 'tictactoe') document.getElementById('arcadeSubTtt').style.display = 'block';
+  else if (g === 'dots') document.getElementById('arcadeSubDots').style.display = 'block';
+  else if (g === 'wordsearch') document.getElementById('arcadeSubWordSearch').style.display = 'block';
+
+  renderArcadeModule();
+}
+
+/* --- QUICK POS BILL ITEM MANAGER --- */
+function quickAddBillItem(name, rate) {
+  const box = document.getElementById('billItems');
+  if (!box) return;
+  const lines = box.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  let found = false;
+  for (let i = 0; i < lines.length; i++) {
+    const parts = lines[i].split(',').map(s => s.trim());
+    if (parts[0].toLowerCase() === name.toLowerCase()) {
+      const curQty = parseInt(parts[1], 10) || 1;
+      lines[i] = \`\${parts[0]}, \${curQty + 1}, \${parts[2] || rate}\`;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    lines.push(\`\${name}, 1, \${rate}\`);
+  }
+  box.value = lines.join('\n');
+  renderBillModule();
+}
+
+function clearBillItems() {
+  const box = document.getElementById('billItems');
+  if (box) {
+    box.value = '';
+    renderBillModule();
+  }
+}
+
+/* --- WHATSAPP DIGITAL BILL SHARING --- */
+function shareBillOnWhatsApp() {
+  const phone = (document.getElementById('billCustPhone')?.value || '').replace(/\D/g, '');
+  const shop = document.getElementById('billShopName')?.value || 'Patil Vadapav';
+  const billNo = document.getElementById('billNo')?.value || '001';
+  const items = document.getElementById('billItems')?.value || '';
+  const upiId = document.getElementById('billUpiId')?.value || '';
+
+  // Calculate total
+  let subtotal = 0;
+  items.split(/\r?\n/).filter(Boolean).forEach(l => {
+    const p = l.split(',').map(s => s.trim());
+    subtotal += (parseFloat(p[1]) || 0) * (parseFloat(p[2]) || 0);
+  });
+  const disc = parseFloat(document.getElementById('billDiscount')?.value) || 0;
+  const tax = parseFloat(document.getElementById('billTax')?.value) || 0;
+  const grandTotal = Math.max(0, subtotal - disc + tax);
+
+  let msg = \`*🧾 \${shop.toUpperCase()}*\\n\`;
+  msg += \`Bill #: \${billNo} • \${new Date().toLocaleDateString('en-IN')}\\n\`;
+  msg += `-------------------------\n`;
+  items.split(/\r?\n/).filter(Boolean).forEach(l => {
+    const p = l.split(',').map(s => s.trim());
+    msg += `• ${p[0]} x ${p[1]} = ₹${((parseFloat(p[1])||0)*(parseFloat(p[2])||0)).toFixed(2)}\n`;
+  });
+  msg += `-------------------------\n`;
+  msg += \`*GRAND TOTAL: ₹\${grandTotal.toFixed(2)}*\\n\`;
+  if (upiId) {
+    msg += \`Pay with GPay / UPI: upi://pay?pa=\${upiId}&pn=\${encodeURIComponent(shop)}&am=\${grandTotal.toFixed(2)}&cu=INR\\n\`;
+  }
+  msg += `Thank you for shopping! पुन्हा या!\n`;
+
+  const url = \`https://wa.me/\${phone ? phone : ''}?text=\${encodeURIComponent(msg)}\`;
+  window.open(url, '_blank');
+}
+
+/* --- DAILY SALES Z-REPORT RENDERER --- */
+function renderZReport() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const shop = (document.getElementById('billShopName')?.value || 'PATIL VADAPAV').toUpperCase();
+  const now = new Date();
+
+  let y = 16;
+  ctx.font = '800 18px "Noto Sans Devanagari", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(shop, w / 2, y);
+  y += 24;
+
+  ctx.fillRect(margin, y, maxW, 28);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 15px monospace';
+  ctx.fillText('DAILY SALES SUMMARY (Z-REPORT)', w / 2, y + 6);
+  ctx.fillStyle = '#000000';
+  y += 36;
+
+  ctx.font = '600 12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Date : ' + now.toLocaleDateString('en-IN'), margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText('Time : ' + now.toLocaleTimeString('en-IN'), w - margin, y);
+  y += 16;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 16;
+
+  ctx.font = '700 13px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Total Bills Settled', margin, y);
+  ctx.textAlign = 'right';
+  ctx.fillText('42 Orders', w - margin, y);
+  y += 18;
+
+  ctx.fillText('Cash Revenue', margin, y);
+  ctx.fillText('₹1,840.00', w - margin, y);
+  y += 18;
+
+  ctx.fillText('GPay / UPI Revenue', margin, y);
+  ctx.fillText('₹3,290.00', w - margin, y);
+  y += 20;
+
+  PrintEngine.drawDoubleLine(ctx, y, margin, w - margin);
+  y += 18;
+
+  ctx.font = '800 16px monospace';
+  ctx.fillText('TOTAL SALES TODAY', margin, y);
+  ctx.fillText('₹5,130.00', w - margin, y);
+  y += 10;
+  PrintEngine.drawDoubleLine(ctx, y, margin, w - margin);
+  y += 20;
+
+  ctx.font = '700 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('TOP SELLING ITEMS TODAY:', w / 2, y);
+  y += 16;
+
+  ctx.font = '600 12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('1. Special Vadapav  (68 pcs)', margin + 14, y); y += 16;
+  ctx.fillText('2. Masala Chai      (54 cups)', margin + 14, y); y += 16;
+  ctx.fillText('3. Samosa Plate     (28 plates)', margin + 14, y); y += 22;
+
+  PrintEngine.drawDashedLine(ctx, y, margin, w - margin);
+  y += 14;
+  ctx.font = '600 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('*** END OF DAY REGISTER CLOSED ***', w / 2, y);
+  y += 16;
+
+  PrintEngine.finish(y);
+}
+
+/* --- LOYALTY STAMP CARD RENDERER --- */
+function renderLoyaltyCard() {
+  const { w, ctx, margin, maxW } = PrintEngine.begin();
+  const shop = (document.getElementById('billShopName')?.value || 'PATIL VADAPAV').toUpperCase();
+
+  let y = 14;
+  ctx.strokeRect(margin, y, maxW, 310);
+  ctx.strokeRect(margin + 2, y + 2, maxW - 4, 306);
+
+  ctx.font = '800 17px "Noto Sans Devanagari", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(shop, w / 2, y + 20);
+  y += 44;
+
+  ctx.fillRect(margin + 16, y, maxW - 32, 26);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 13px monospace';
+  ctx.fillText('★ LOYALTY REWARD CARD ★', w / 2, y + 6);
+  ctx.fillStyle = '#000000';
+  y += 38;
+
+  ctx.font = '700 12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Buy 5 Vadapavs, Get 1 FREE!', w / 2, y);
+  y += 24;
+
+  // 6 Stamp circles (2 rows of 3)
+  const radius = 18;
+  const colW = (maxW - 40) / 3;
+
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 3; c++) {
+      const num = r * 3 + c + 1;
+      const cX = margin + 20 + c * colW + colW / 2;
+      const cY = y + r * 50 + 20;
+
+      ctx.beginPath();
+      ctx.arc(cX, cY, radius, 0, Math.PI * 2);
+      ctx.lineWidth = num === 6 ? 3 : 1;
+      ctx.strokeStyle = '#000000';
+      ctx.stroke();
+
+      ctx.font = num === 6 ? '800 10px monospace' : '700 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(num === 6 ? 'FREE!' : String(num), cX, cY + 4);
+    }
+  }
+
+  y += 114;
+  ctx.font = '600 11px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('Customer Phone: __________________', margin + 14, y);
+  y += 20;
+  ctx.fillText('Valid for 30 Days from date of issue', margin + 14, y);
+
+  PrintEngine.finish(340);
+}
+
+function handleWordSearchThemeChange() {
+  const theme = document.getElementById('wsTheme').value;
+  const customGroup = document.getElementById('wsCustomGroup');
+  if (customGroup) customGroup.style.display = (theme === 'custom' ? 'block' : 'none');
+  renderArcadeModule();
+}
+
 function handleHotelLogoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -3178,10 +4585,90 @@ function closeHardwareModal() {
 const savedTheme = localStorage.getItem('ezo_theme') || 'dark';
 document.body.setAttribute('data-theme', savedTheme);
 
+
+/* =========================================================================
+   16. MOBILE NAVIGATION & PANE CONTROLLERS
+   ========================================================================= */
+function toggleMobileSidebar() {
+  const sb = document.getElementById('appSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  sb.classList.toggle('mobile-open');
+  bd.classList.toggle('mobile-open');
+}
+
+function closeMobileSidebar() {
+  const sb = document.getElementById('appSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  sb.classList.remove('mobile-open');
+  bd.classList.remove('mobile-open');
+}
+
+function switchMobilePane(pane) {
+  const modView = document.getElementById('viewModule');
+  const editBtn = document.getElementById('mobileTabEditorBtn');
+  const prevBtn = document.getElementById('mobileTabPreviewBtn');
+
+  if (modView) modView.setAttribute('data-mobile-pane', pane);
+
+  if (editBtn && prevBtn) {
+    editBtn.classList.toggle('active', pane === 'editor');
+    prevBtn.classList.toggle('active', pane === 'preview');
+  }
+
+  // If switching to preview, make sure canvas is updated
+  if (pane === 'preview') {
+    renderCurrentTool();
+  }
+}
+
+// Automatically close mobile sidebar on navigation
+const originalNavigateTo = navigateTo;
+navigateTo = function(toolId) {
+  closeMobileSidebar();
+  originalNavigateTo(toolId);
+
+  // Update mobile bottom bar active states
+  ['mBottomHome', 'mBottomBill', 'mBottomArcade'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (toolId === 'dashboard') document.getElementById('mBottomHome')?.classList.add('active');
+  else if (toolId === 'bill') document.getElementById('mBottomBill')?.classList.add('active');
+  else if (toolId === 'arcade') document.getElementById('mBottomArcade')?.classList.add('active');
+
+  // Reset to editor pane on tool change
+  switchMobilePane('editor');
+};
+
 // Initialize app
 navigateTo('bill'); // Start directly on the Bill module as requested by user
 updateFavStars();
 </script>
+
+<!-- MOBILE BOTTOM NAVIGATION BAR -->
+<nav class="mobile-bottom-bar">
+  <button class="bottom-bar-item active" id="mBottomHome" onclick="navigateTo('dashboard')">
+    <span class="b-icon">🏠</span>
+    <span>Home</span>
+  </button>
+  <button class="bottom-bar-item" id="mBottomBill" onclick="navigateTo('bill')">
+    <span class="b-icon">🧾</span>
+    <span>Bill POS</span>
+  </button>
+  <button class="bottom-bar-item" id="mBottomPreview" onclick="switchMobilePane('preview')">
+    <span class="b-icon">👁️</span>
+    <span>Preview</span>
+  </button>
+  <button class="bottom-bar-item" id="mBottomArcade" onclick="navigateTo('arcade')">
+    <span class="b-icon">🎮</span>
+    <span>Arcade</span>
+  </button>
+  <button class="bottom-bar-item" id="mBottomMenu" onclick="toggleMobileSidebar()">
+    <span class="b-icon">☰</span>
+    <span>All Tools</span>
+  </button>
+</nav>
+
 </body>
 </html>
 `;
